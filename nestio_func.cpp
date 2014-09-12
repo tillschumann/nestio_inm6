@@ -3,12 +3,17 @@
 /**
 /**/
 #include <math.h>
+#include <cmath>
 #include <random>
 #include "nestio_func.h"
 
+template <typename T> int sgn(T val) {
+    return (T(0) < val) - (val < T(0));
+}
+
 double nestio::rand2(double var, double mean)
 {
-  return sqrt(var*(rand()/RAND_MAX-0.5)*2.)+mean;
+  return (sqrt(var*rand()/(double)RAND_MAX)*sgn(rand()/(double)RAND_MAX-0.5))+mean;
 }
 
 double nestio::rand2(nestio::Distribution &distribution)
@@ -31,7 +36,8 @@ std::ostream& nestio::operator << (std::ostream &o, const nestio::Configuration 
     << "samlpingIntervalsOfMeter: " << c.samlpingIntervalsOfMeter << "\n"
     << "numberOfValuesWrittenByMeter: " << c.numberOfValuesWrittenByMeter << "\n"
     << "deadTimeSpikeDetector: " << c.deadTimeSpikeDetector << "\n"
-    << "deadTimeMultimeters: " << c.deadTimeMultimeters << "\n";
+    << "deadTimeMultimeters: " << c.deadTimeMultimeters << "\n"
+    << "deadTimeDeliver: " << c.deadTimeDeliver << "\n";
     
   return o;
 }

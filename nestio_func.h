@@ -16,6 +16,13 @@ namespace nestio
     double var;
   };
   
+  struct SimSettings {
+   double Tstart;
+   double T;
+   double Tresolution;
+    
+  };
+  
   struct Configuration {
     int numberOfThreads;
     int numberOfProcesses;
@@ -26,6 +33,7 @@ namespace nestio
     Distribution numberOfValuesWrittenByMeter;
     Distribution deadTimeSpikeDetector;
     Distribution deadTimeMultimeters;
+    Distribution deadTimeDeliver;
   };
   
   extern std::ostream& operator << (std::ostream &o, const nestio::Distribution &d);

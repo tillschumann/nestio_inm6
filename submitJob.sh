@@ -16,7 +16,7 @@
 #PBS -N hdf5experiment
 
 ### set the number of nodes and processes per node (ppn)
-#PBS -l select=1:ppn=2
+#PBS -l select=5:ppn=7
 
 ### mail alert at (b)eginning, (e)nd and (a)bortion of execution
 ##PBS -m bea
@@ -70,6 +70,8 @@ echo "------------------------------------------------------"
 
 ### start job from the directory it was submitted
 cd $PBS_O_WORKDIR
+
+##export OMP_NUM_THREADS=1
 
 ### execute script
 CMP="mpirun -np 2 ./runNESTProxy"

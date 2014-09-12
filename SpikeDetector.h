@@ -1,42 +1,69 @@
 #include <random>
 #include <cmath>
 #include <iostream>
+#include <vector>
 //#include "NESTProxy.h"
+#include "nestio_func.h"
+
+#ifndef SPIKEDETECTOR_CLASS
+#define SPIKEDETECTOR_CLASS
 
 //double rand_value(double var,double mean);
 
 template < typename L >
 class SpikeDetector {
 private:
-  int neuron_id;
-  double spikes_mean;
-  double sqrt_spikes_var;
-  double deadTime_mean;
-  double deadTime_var;
+  
+  //nestio::Distribution spikes_dist;
+  nestio::Distribution deadTime;
   L* logger;
+  bool isSinup;
   
 public:
-  
-  SpikeDetector(const int neuron_id, const double mean, const double var, L* logger): 
-  neuron_id(neuron_id),
-  spikes_mean(mean),
-  logger(logger)
+  int spikedetector_id;
+  std::vector<int> neuron_ids;
+  std::vector<nestio::Distribution> spikes_dists;
+  SpikeDetector(const int spikedetector_id, L* logger): 
+  spikedetector_id(spikedetector_id),
+  logger(logger),
+  isSinup(false)
   {
     std::cout << "Signup SpikeDetector" << std::endl;
     std::cout << "configuration:" << std::endl;
-    std::cout << "\tneuron_id=" <<neuron_id << std::endl;
-    std::cout << "\tspikes_mean=" << spikes_mean<< std::endl;
-    logger->signup_spike(neuron_id, 1000, 1);
-    sqrt_spikes_var = sqrt(var);
+    std::cout << "\tneuron_id=" << spikedetector_id << std::endl;
+    //std::cout << "\tspikes_mean=" << spikes_dist.mean<< std::endl;
+    //logger->signup_spike(neuron_id, 1000, 1);
+    //logger->signup_spike(this,1000);
   };
-  
-  void update(double t)
+  void connect2Neuron(int id, nestio::Distribution dist)
   {
-      std::cout << "update SpikeDetector " << neuron_id << std::endl;
-      int spikes = (int)sqrt(sqrt_spikes_var*rand())+spikes_mean;
-      for (int i=0; i<spikes; i++) {
-	  std::cout << "record_spike" << std::endl;
-	  logger->record_spike(neuron_id, t);
+      if (!isSinup) {
+	neuron_ids.push_back(id);
+	spikes_dists.push_back(dist);
+      }
+      else {
+	std::cout << "SpikeDetector error: spikedetector has already signed nup" << std::endl;
+      }
+  }
+  
+  void singup()
+  { 
+    for (int i=0; i<neuron_ids.size(); i++)
+      logger->signup_spike(this, neuron_ids.at(i),1000);
+    isSinup = true;
+  }
+  
+  void update(double t, int timestamp)
+  {
+      for (int n=0; n<neuron_ids.size(); n++) {
+	std::cout << "update SpikeDetector " << neuron_ids.at(n) << std::endl;
+	int spikes = (int)nestio::rand2(spikes_dists.at(n));
+	for (int i=0; i<spikes; i++) {
+	    std::cout << "record_spike" << std::endl;
+	    logger->record_spike(neuron_ids.at(n), timestamp);
+	}
       }
   }
 };
+
+#endif
