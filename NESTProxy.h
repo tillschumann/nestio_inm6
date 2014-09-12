@@ -119,18 +119,18 @@ class NESTProxy
 			thread_num = omp_get_thread_num();
 			#endif
 
-			std::cout << "rank=" << rank << " conf.numberOfThreads=" << conf.numberOfThreads << " thread_num=" << thread_num << std::endl;
-			int neuron_id_offset = (rank*conf.numberOfThreads+thread_num)*conf.numberOfSpikeDetectorsPerProcess;
-			std::cout << "neuron_id_offset=" << neuron_id_offset << std::endl;
-			for (int i=0;i<conf.numberOfSpikeDetectorsPerProcess;i++) {
+			//std::cout << "rank=" << rank << " conf.numberOfThreads=" << conf.numberOfThreads << " thread_num=" << thread_num << std::endl;
+			int neuron_id_offset = (rank*conf.numberOfThreads+thread_num)*conf.numberOfSpikeDetectorsPerThread;
+			//std::cout << "neuron_id_offset=" << neuron_id_offset << std::endl;
+			for (int i=0;i<conf.numberOfSpikeDetectorsPerThread;i++) {
 			    SpikeDetector<L>* spikeDetector = new SpikeDetector<L>(neuron_id_offset+i, &logger);
 			    spikeDetector->connect2Neuron(neuron_id_offset+i,conf.spikesPerDector);
 			    spikeDetector->singup();
 			    spikeDetectors.push_back(spikeDetector);
 			}
 			
-			int multimeter_id_offset = (rank*conf.numberOfThreads+thread_num)*conf.numberOfMultimetersPerProcess;
-			for (int i=0;i<conf.numberOfMultimetersPerProcess;i++) {
+			int multimeter_id_offset = (rank*conf.numberOfThreads+thread_num)*conf.numberOfMultimetersPerThread;
+			for (int i=0;i<conf.numberOfMultimetersPerThread;i++) {
 			    double interval = nestio::rand2(conf.samlpingIntervalsOfMeter);
 			    Multimeter<L>* multimeter = new Multimeter<L>(multimeter_id_offset+i, interval, simSettings, nestio::rand2(conf.numberOfValuesWrittenByMeter), &logger);
 			    multimeter->connect2Neuron(multimeter_id_offset+i);
@@ -145,11 +145,11 @@ class NESTProxy
 		~NESTProxy()
 		{
 		    std::cout << "destructor NESTProxy" << std::endl;
-		    for (int i=0;i<conf.numberOfSpikeDetectorsPerProcess;i++) {
+		    for (int i=0;i<conf.numberOfSpikeDetectorsPerThread;i++) {
 			std::cout << "delete spikedetector " << i << std::endl;
 			delete spikeDetectors.at(i);
 		    }
-		    for (int i=0;i<conf.numberOfMultimetersPerProcess;i++) {
+		    for (int i=0;i<conf.numberOfMultimetersPerThread;i++) {
 			std::cout << "delete multimeter " << i << std::endl;
 			delete multimeters.at(i);
 		    }
@@ -186,11 +186,11 @@ class NESTProxy
 				{
 				  // WRITE
 				  writetimer->start();
-				  for (int i=0;i<conf.numberOfSpikeDetectorsPerProcess;i++) {
+				  for (int i=0;i<conf.numberOfSpikeDetectorsPerThread;i++) {
 				      sleepAndMeasure(conf.deadTimeSpikeDetector);
 				      spikeDetectors.at(i)->update(t,timestamp);
 				  }
-				  for (int i=0;i<conf.numberOfMultimetersPerProcess;i++) {
+				  for (int i=0;i<conf.numberOfMultimetersPerThread;i++) {
 				      sleepAndMeasure(conf.deadTimeMultimeters);
 				      multimeters.at(i)->update(t,timestamp);
 				  }

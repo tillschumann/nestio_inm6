@@ -26,8 +26,8 @@ namespace nestio
   struct Configuration {
     int numberOfThreads;
     int numberOfProcesses;
-    int numberOfSpikeDetectorsPerProcess;
-    int numberOfMultimetersPerProcess;
+    int numberOfSpikeDetectorsPerThread;
+    int numberOfMultimetersPerThread;
     Distribution spikesPerDector;
     Distribution samlpingIntervalsOfMeter;
     Distribution numberOfValuesWrittenByMeter;

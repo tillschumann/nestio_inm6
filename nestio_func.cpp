@@ -31,8 +31,8 @@ std::ostream& nestio::operator << (std::ostream &o, const nestio::Configuration 
 {
   o << "numberOfThreads: " << c.numberOfThreads << "\n" 
     << "numberOfProcesses: " << c.numberOfProcesses << "\n"
-    << "numberOfSpikeDetectorsPerProcess: " << c.numberOfSpikeDetectorsPerProcess << "\n"
-    << "numberOfMultimetersPerProcess: " << c.numberOfMultimetersPerProcess << "\n"
+    << "numberOfSpikeDetectorsPerThread: " << c.numberOfSpikeDetectorsPerThread << "\n"
+    << "numberOfMultimetersPerThread: " << c.numberOfMultimetersPerThread << "\n"
     << "samlpingIntervalsOfMeter: " << c.samlpingIntervalsOfMeter << "\n"
     << "numberOfValuesWrittenByMeter: " << c.numberOfValuesWrittenByMeter << "\n"
     << "deadTimeSpikeDetector: " << c.deadTimeSpikeDetector << "\n"

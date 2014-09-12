@@ -41,10 +41,10 @@ int main(int argc, char *argv[])
 	nestio::Configuration conf;
 	conf.numberOfThreads=numberOfThreads;
 	conf.numberOfProcesses=1;
-	conf.numberOfSpikeDetectorsPerProcess=0;
+	conf.numberOfSpikeDetectorsPerThread=0;
 	conf.spikesPerDector.mean=5;
 	conf.spikesPerDector.var=3;
-	conf.numberOfMultimetersPerProcess=2;
+	conf.numberOfMultimetersPerThread=2;
 	conf.samlpingIntervalsOfMeter.mean=0.2;
 	conf.samlpingIntervalsOfMeter.var=0;
 	conf.deadTimeSpikeDetector.mean=0;
@@ -60,8 +60,8 @@ int main(int argc, char *argv[])
 	{	
 	  
 		MPI_Comm_size(MPI_COMM_WORLD,&conf.numberOfProcesses);
-		//HDF5mpipp logger_hdf5("log.hdf5", 1000, simSettings);
-		Sionlib_logger logger_sion("log.sion", 1000, simSettings);
+		HDF5mpipp logger_hdf5("log.hdf5", 1000, simSettings);
+		//Sionlib_logger logger_sion("log.sion", 1000, simSettings);
 		
 		#pragma omp parallel firstprivate(threadNumber,simSettings,conf)
 		{
