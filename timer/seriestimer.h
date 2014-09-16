@@ -123,6 +123,9 @@ public:
      */
     void print(const char* msg = "", Stopwatch::timeunit_t timeunit = Stopwatch::SECONDS, 
                std::ostream& os = std::cout) const;
+	       
+    void print_csv(const char* msg, Stopwatch::timeunit_t timeunit, 
+               std::ostream& os) const;
     
     /**
      * Convenient method for writing time in seconds

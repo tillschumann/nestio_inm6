@@ -172,6 +172,26 @@ double nest::SeriesTimer::quantile(double q, Stopwatch::timeunit_t timeunit) con
 #endif
 }
 
+
+void nest::SeriesTimer::print_csv(const char* msg, Stopwatch::timeunit_t timeunit, 
+               std::ostream& os) const
+{
+#ifdef ENABLE_TIMING
+    assert(Stopwatch::correct_timeunit(timeunit));
+    
+    os << msg << ";";
+    os << sum(timeunit) << ";";
+    os << mean(timeunit) << ";";
+    os << std(timeunit) << ";";
+    os << quantile(0.0, timeunit) << ";";
+    os << quantile(0.25, timeunit) << ";";
+    os << quantile(0.5, timeunit) << ";";
+    os << quantile(0.75, timeunit) << ";";
+    os << quantile(1.0, timeunit) << ";";
+    os << "\n";
+#endif
+}
+
 void nest::SeriesTimer::print(const char* msg, Stopwatch::timeunit_t timeunit, 
                std::ostream& os) const
 {

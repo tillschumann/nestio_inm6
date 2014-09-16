@@ -69,10 +69,10 @@ public:
   
   void update(double t, int timestamp)
   {
-    std::cout << "update Multimeter " << multimeter_id << std::endl;
+    //std::cout << "update Multimeter " << multimeter_id << std::endl;
     while (t-lastRecordT >= samlpingInterval) {
       lastRecordT+=samlpingInterval;
-      std::cout << "record_multi" << std::endl;
+      //std::cout << "record_multi" << std::endl;
       values[0]+=0.3;
       logger->record_multi(multimeter_id, timestamp, values);
      

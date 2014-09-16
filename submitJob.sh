@@ -74,7 +74,7 @@ cd $PBS_O_WORKDIR
 ##export OMP_NUM_THREADS=1
 
 ### execute script
-CMP="mpirun -np 2 ./runNESTProxy"
+CMP="mpirun -np 5 ./runNESTProxy"
 #CMP="mpirun -np 2 ./test_sionlib"
 
 echo "$CMP"

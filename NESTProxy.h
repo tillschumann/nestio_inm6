@@ -62,11 +62,11 @@ class NESTProxy
 		
 		void sleepAndMeasure(nestio::Distribution dist)
 		{
-		  sleeptimer->start();
+		  sleeptimer[omp_get_thread_num()].start();
 		  int s = (int)nestio::rand2(dist);
 		  std::cout << "sleep " << s << std::endl;
 		  sleep(s);
-		  sleeptimer->stop();
+		  sleeptimer[omp_get_thread_num()].stop();
 		}
 		
 		void deliver()
@@ -114,13 +114,9 @@ class NESTProxy
 			std::cout << "configuration:" << std::endl;
 			std::cout << conf << std::endl;
 			
-			int thread_num = 1;
-			#ifdef _OPENMP
-			thread_num = omp_get_thread_num();
-			#endif
 
 			//std::cout << "rank=" << rank << " conf.numberOfThreads=" << conf.numberOfThreads << " thread_num=" << thread_num << std::endl;
-			int neuron_id_offset = (rank*conf.numberOfThreads+thread_num)*conf.numberOfSpikeDetectorsPerThread;
+			int neuron_id_offset = (rank*conf.numberOfThreads)*conf.numberOfSpikeDetectorsPerThread;
 			//std::cout << "neuron_id_offset=" << neuron_id_offset << std::endl;
 			for (int i=0;i<conf.numberOfSpikeDetectorsPerThread;i++) {
 			    SpikeDetector<L>* spikeDetector = new SpikeDetector<L>(neuron_id_offset+i, &logger);
@@ -129,7 +125,7 @@ class NESTProxy
 			    spikeDetectors.push_back(spikeDetector);
 			}
 			
-			int multimeter_id_offset = (rank*conf.numberOfThreads+thread_num)*conf.numberOfMultimetersPerThread;
+			int multimeter_id_offset = (rank*conf.numberOfThreads)*conf.numberOfMultimetersPerThread;
 			for (int i=0;i<conf.numberOfMultimetersPerThread;i++) {
 			    double interval = nestio::rand2(conf.samlpingIntervalsOfMeter);
 			    Multimeter<L>* multimeter = new Multimeter<L>(multimeter_id_offset+i, interval, simSettings, nestio::rand2(conf.numberOfValuesWrittenByMeter), &logger);
@@ -168,47 +164,53 @@ class NESTProxy
 			std::cout << "NEST PROXY RUN" << std::endl;
 			std::cout << "Parameters:" << std::endl;
 			std::cout << "RAND_MAX=" << RAND_MAX << std::endl;
+			//std::cout << "thread_num=" << thread_num << std::endl;
 			double t=simSettings.Tstart;
 			int timestamp=0;
 			
 			//init
 			//gather step
 			
+			
 			while (t<=simSettings.T) {
 				std::cout << "Iteration: t="<< t << " timestamp=" << timestamp << std::endl;
 				// DELIVER
 				//#pragma omp single
-		#pragma omp barrier
+				
+				#pragma omp parallel firstprivate(t,timestamp)
 				{
-				  deliver();
-				}
-
-				{
-				  // WRITE
-				  writetimer->start();
-				  for (int i=0;i<conf.numberOfSpikeDetectorsPerThread;i++) {
-				      sleepAndMeasure(conf.deadTimeSpikeDetector);
-				      spikeDetectors.at(i)->update(t,timestamp);
+				  int thread_num = omp_get_thread_num();
+				  #pragma omp barrier
+				  {
+				    deliver();
 				  }
-				  for (int i=0;i<conf.numberOfMultimetersPerThread;i++) {
-				      sleepAndMeasure(conf.deadTimeMultimeters);
-				      multimeters.at(i)->update(t,timestamp);
+
+				  {
+				    // WRITE
+				    writetimer[thread_num].start();
+				    for (int i=0;i<conf.numberOfSpikeDetectorsPerThread;i++) {
+					sleepAndMeasure(conf.deadTimeSpikeDetector);
+					spikeDetectors.at(i)->update(t,timestamp);
+				    }
+				    for (int i=0;i<conf.numberOfMultimetersPerThread;i++) {
+					sleepAndMeasure(conf.deadTimeMultimeters);
+					multimeters.at(i)->update(t,timestamp);
+				    }
+				    writetimer[thread_num].stop();
 				  }
-				  writetimer->stop();
+				  //GATHER
+				  #pragma omp barrier
+				  //SYNC
+				  synctimer[thread_num].start();
+				  sync();
+				  synctimer[thread_num].stop();
+				
 				}
-
-				//GATHER
-
-
-				#pragma omp barrier
-				//SYNC
-				synctimer->start();
-				sync();
-				synctimer->stop();
 				
 				t+=simSettings.Tresolution;
 				timestamp++;
 			}
+			
 			std::cout << "Iterations done" << std::endl;
 		}
 };

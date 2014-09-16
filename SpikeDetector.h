@@ -56,10 +56,10 @@ public:
   void update(double t, int timestamp)
   {
       for (int n=0; n<neuron_ids.size(); n++) {
-	std::cout << "update SpikeDetector " << neuron_ids.at(n) << std::endl;
+	//std::cout << "update SpikeDetector " << neuron_ids.at(n) << std::endl;
 	int spikes = (int)nestio::rand2(spikes_dists.at(n));
 	for (int i=0; i<spikes; i++) {
-	    std::cout << "record_spike" << std::endl;
+	    //std::cout << "record_spike" << std::endl;
 	    logger->record_spike(neuron_ids.at(n), timestamp);
 	}
       }

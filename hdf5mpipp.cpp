@@ -84,6 +84,7 @@ void HDF5mpipp::updateSpikeDataSets()
 {
 #pragma omp single
   {
+    std::cout << "updateSpikeDataSets" << std::endl;
     const int ownNumber = private_ptr_spike_datasets.size();
     const int totalNumber = spike_datasets.size();
     
@@ -102,6 +103,7 @@ void HDF5mpipp::updateSpikeDataSets()
 	}
       }
     }
+    std::cout << "updateSpikeDataSets end" << std::endl;
   }
     
 }
@@ -117,6 +119,7 @@ void HDF5mpipp::record_spike(int neuron_id, int timestamp)
     }
     std::cout << neuron_id << ": spike recording: space for " << pDataSet->head.size-pDataSet->entries << " more spikes" << std::endl;
     storeContinuousAnalogSignal(*pDataSet, timestamp, NULL);
+    std::cout << "storeContinuousAnalogSignal end" << std::endl;
 }	
 
 void HDF5mpipp::storeContinuousAnalogSignal(PrivateDataSet &pDataSet, int timestamp, double* v)
@@ -127,13 +130,12 @@ void HDF5mpipp::storeContinuousAnalogSignal(PrivateDataSet &pDataSet, int timest
     //std::cout << "pDataSet.entries=" << pDataSet.entries << std::endl;
     //std::cout << "pDataSet.buffer_size=" << pDataSet.buffer_size << std::endl;
     //std::cout << "pDataSet.dset_id=" << pDataSet.dset_id << std::endl;
-    hsize_t offset[2] = {pDataSet.entries,0};
-    hsize_t dimsext[2] = {1,1}; 
-
     /* Select a hyperslab in extended portion of dataset  */
     
     #pragma omp critical
     {
+      hsize_t offset[2] = {pDataSet.entries,0};
+      hsize_t dimsext[2] = {1,1}; 
     
       hid_t filespace = H5Dget_space (pDataSet.dset_id);
       status = H5Sselect_hyperslab (filespace, H5S_SELECT_SET, offset, NULL, dimsext, NULL);  

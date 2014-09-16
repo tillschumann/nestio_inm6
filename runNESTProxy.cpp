@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
 	nestio::Configuration conf;
 	conf.numberOfThreads=numberOfThreads;
 	conf.numberOfProcesses=1;
-	conf.numberOfSpikeDetectorsPerThread=0;
+	conf.numberOfSpikeDetectorsPerThread=3;
 	conf.spikesPerDector.mean=5;
 	conf.spikesPerDector.var=3;
 	conf.numberOfMultimetersPerThread=2;
@@ -60,46 +60,49 @@ int main(int argc, char *argv[])
 	{	
 	  
 		MPI_Comm_size(MPI_COMM_WORLD,&conf.numberOfProcesses);
-		HDF5mpipp logger_hdf5("log.hdf5", 1000, simSettings);
-		//Sionlib_logger logger_sion("log.sion", 1000, simSettings);
+		//HDF5mpipp logger_hdf5("log.hdf5", 1000, simSettings);
+		Sionlib_logger logger_sion("log.sion", 1000, simSettings);
 		
-		#pragma omp parallel firstprivate(threadNumber,simSettings,conf)
-		{
 		  
-		nest::SeriesTimer writetimer, synctimer, sleeptimer;
+		nest::SeriesTimer writetimer[conf.numberOfThreads], synctimer[conf.numberOfThreads], sleeptimer[conf.numberOfThreads];
+
 		
-		
-		NESTProxy<HDF5mpipp> proxy(simSettings,
+		/*NESTProxy<HDF5mpipp> proxy(simSettings,
 					    conf,
 					   logger_hdf5,
-					   &writetimer, &synctimer, &sleeptimer);
-		proxy.run();
+					   writetimer, synctimer, sleeptimer);
+		proxy.run();*/
 		
 		
-		/*NESTProxy<Sionlib_logger> proxy2(simSettings,
+		NESTProxy<Sionlib_logger> proxy2(simSettings,
 						 conf,
 						 logger_sion,
-						 &writetimer, &synctimer, &sleeptimer);
-		proxy2.run();*/
+						 writetimer, synctimer, sleeptimer);
+		proxy2.run();
 		
-		
-#pragma omp critical
-{
 		int rank;
 		MPI_Comm_rank (MPI_COMM_WORLD, &rank);
-		int omp_thread_num = 0;
-		#ifdef _OPENMP
-		omp_thread_num = omp_get_thread_num();
-		#endif
-		std::ofstream benchfile;
-		std::stringstream ss;
-		ss << "benchfile_" << rank << "_" << omp_thread_num;
-		benchfile.open(ss.str());
-		writetimer.print("write timings: ",nest::Stopwatch::MILLISEC, benchfile);
-		synctimer.print("sync timings: ", nest::Stopwatch::MILLISEC, benchfile);
-		sleeptimer.print("sleep timings: ", nest::Stopwatch::MILLISEC, benchfile);
-		benchfile.close();
-}
+		
+		for(int r=0; r<conf.numberOfProcesses; r++ ) {
+		  MPI_Barrier( MPI_COMM_WORLD );
+		  if (r==rank)
+		    for (int i=0;i<conf.numberOfThreads;i++) {
+		      std::ofstream benchfile;
+		      //std::stringstream ss;
+		      //ss << "benchfile_" << rank << "_" << i;
+		      benchfile.open("benchfile.csv",std::ofstream::out|std::ofstream::app);
+		      
+		      std::stringstream ss2;
+		      ss2 << rank << ";" << i  << ";write timings";
+		      writetimer[i].print_csv(ss2.str().c_str(),nest::Stopwatch::MILLISEC, benchfile);
+		      ss2.str("");
+		      ss2 << rank << ";" << i << ";sync timings";
+		      synctimer[i].print_csv(ss2.str().c_str(), nest::Stopwatch::MILLISEC, benchfile);
+		      ss2.str("");
+		      ss2 << rank << ";" << i << ";sleep timings" ;
+		      sleeptimer[i].print_csv(ss2.str().c_str(), nest::Stopwatch::MILLISEC, benchfile);
+		      benchfile.close();
+		    }
 		}
 	}
 	
