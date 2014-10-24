@@ -2,6 +2,7 @@
 #HDF_INSTALL = /mnt/hdf/packages/hdf5/v189/Linux_2.6/hdf5-1.8.9-linux-static
 HDF_INSTALL = /users/schumann/hdf5-1.8.12/hdf5
 EXTLIB = -L$(HDF_INSTALL)/lib
+#CC          = scorep --user mpic++
 CC          = mpic++
 #CFLAGS      = -g -O0 -std=c++0x
 CFLAGS      = -std=c++0x -DENABLE_TIMING=0 -g -O0 -fopenmp
@@ -58,6 +59,12 @@ test_sionlib: test_sionlib.cpp
 	
 openmp-hdf5: openmp-hdf5.c
 	mpicc -g -O0 -fopenmp -o openmp-hdf5 openmp-hdf5.c $(INCLUDE) $(LIBSHDF) $(LIB)
+	
+testRand: testRand.o nestio_func.o
+	$(CC) $(CFLAGS) -o testRand testRand.o nestio_func.o $(INCLUDE)
+	
+testRand.o: testRand.cpp
+	$(CC) $(CFLAGS) -c testRand.cpp $(INCLUDE)
 	
 clean: 
 	rm -f *.h5 *.o \

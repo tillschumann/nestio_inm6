@@ -40,45 +40,47 @@ int main(int argc, char *argv[])
 	
 	nestio::Configuration conf;
 	conf.numberOfThreads=numberOfThreads;
-	conf.numberOfProcesses=1;
-	conf.numberOfSpikeDetectorsPerThread=3;
-	conf.spikesPerDector.mean=5;
-	conf.spikesPerDector.var=3;
-	conf.numberOfMultimetersPerThread=2;
-	conf.samlpingIntervalsOfMeter.mean=0.2;
-	conf.samlpingIntervalsOfMeter.var=0;
+	conf.numberOfSpikeDetectorsPerThread=2;
+	conf.spikesPerDector.mean=0.654797;
+	conf.spikesPerDector.var=0.745297;
+	conf.numberOfMultimetersPerThread=0;
+	conf.samplingIntervalsOfMeter.mean=0;
+	conf.samplingIntervalsOfMeter.var=0;
 	conf.deadTimeSpikeDetector.mean=0;
 	conf.deadTimeSpikeDetector.var=0;
 	conf.deadTimeMultimeters.mean=0;
 	conf.deadTimeMultimeters.var=0;
-	conf.deadTimeDeliver.mean=0;
-	conf.deadTimeDeliver.var=0;
-	conf.numberOfValuesWrittenByMeter.mean=3;
-	conf.numberOfValuesWrittenByMeter.var=2;
+	conf.deadTimeDeliver.mean=0.57;
+	conf.deadTimeDeliver.var=7299183.69;
+	conf.numberOfValuesWrittenByMeter.mean=0;
+	conf.numberOfValuesWrittenByMeter.var=0;
 	
 	MPI_Init(&argc,&argv);
 	{	
 	  
 		MPI_Comm_size(MPI_COMM_WORLD,&conf.numberOfProcesses);
-		//HDF5mpipp logger_hdf5("log.hdf5", 1000, simSettings);
-		Sionlib_logger logger_sion("log.sion", 1000, simSettings);
+		HDF5mpipp logger_hdf5("log.hdf5", 1000, simSettings);
+		//Sionlib_logger logger_sion("log.sion", 1000, simSettings);
 		
 		  
-		nest::SeriesTimer writetimer[conf.numberOfThreads], synctimer[conf.numberOfThreads], sleeptimer[conf.numberOfThreads];
+		nest::SeriesTimer writetimer[conf.numberOfThreads],
+				  synctimer[conf.numberOfThreads],
+				  sleeptimer[conf.numberOfThreads],
+				  delivertimer[conf.numberOfThreads];
 
 		
-		/*NESTProxy<HDF5mpipp> proxy(simSettings,
+		NESTProxy<HDF5mpipp> proxy(simSettings,
 					    conf,
 					   logger_hdf5,
-					   writetimer, synctimer, sleeptimer);
-		proxy.run();*/
+					   writetimer, synctimer, sleeptimer,delivertimer);
+		proxy.run();
 		
 		
-		NESTProxy<Sionlib_logger> proxy2(simSettings,
+		/*NESTProxy<Sionlib_logger> proxy2(simSettings,
 						 conf,
 						 logger_sion,
-						 writetimer, synctimer, sleeptimer);
-		proxy2.run();
+						 writetimer, synctimer, sleeptimer,delivertimer);
+		proxy2.run();*/
 		
 		int rank;
 		MPI_Comm_rank (MPI_COMM_WORLD, &rank);
@@ -101,6 +103,9 @@ int main(int argc, char *argv[])
 		      ss2.str("");
 		      ss2 << rank << ";" << i << ";sleep timings" ;
 		      sleeptimer[i].print_csv(ss2.str().c_str(), nest::Stopwatch::MILLISEC, benchfile);
+		      ss2.str("");
+		      ss2 << rank << ";" << i << ";deliver timings" ;
+		      delivertimer[i].print_csv(ss2.str().c_str(), nest::Stopwatch::MILLISEC, benchfile);
 		      benchfile.close();
 		    }
 		}

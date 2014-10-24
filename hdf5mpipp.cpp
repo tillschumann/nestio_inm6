@@ -124,14 +124,6 @@ void HDF5mpipp::record_spike(int neuron_id, int timestamp)
 
 void HDF5mpipp::storeContinuousAnalogSignal(PrivateDataSet &pDataSet, int timestamp, double* v)
 {
-    //std::cout << "storeContinuousAnalogSignal" << std::endl;
-    //std::cout << "pDataSet.head.id=" << pDataSet.head.id << std::endl;
-    //std::cout << "pDataSet.head.numberOfValues=" << pDataSet.head.numberOfValues << std::endl;
-    //std::cout << "pDataSet.entries=" << pDataSet.entries << std::endl;
-    //std::cout << "pDataSet.buffer_size=" << pDataSet.buffer_size << std::endl;
-    //std::cout << "pDataSet.dset_id=" << pDataSet.dset_id << std::endl;
-    /* Select a hyperslab in extended portion of dataset  */
-    
     #pragma omp critical
     {
       hsize_t offset[2] = {pDataSet.entries,0};
@@ -142,29 +134,24 @@ void HDF5mpipp::storeContinuousAnalogSignal(PrivateDataSet &pDataSet, int timest
 
       /* Define MPI writing property */
       hid_t plist_id = H5Pcreate(H5P_DATASET_XFER);
-      H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_INDEPENDENT);//H5FD_MPIO_COLLECTIVE);
-      /* Write the data to the extended portion of dataset  */
-      //std::cout << "before write" << std::endl;
-      //double v1[10];
+      H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_INDEPENDENT);
       
       char buffer[sizeof(int)+pDataSet.head.numberOfValues*sizeof(double)];
-      
       memcpy(buffer, &timestamp, sizeof(int));
       memcpy(buffer+sizeof(int), v,pDataSet.head.numberOfValues*sizeof(double));
     
       /* Define memory space */
-      hid_t memspace = H5Screate_simple (RANK, dimsext, NULL); 
+      hid_t memspace = H5Screate_simple (RANK, dimsext, NULL);
+      
+      /* Write the data to the extended portion of dataset  */
       status = H5Dwrite (pDataSet.dset_id, pDataSet.memtype, memspace, filespace,
 		      plist_id, buffer);
       status = H5Sclose (memspace);
       
-      
-      //std::cout << "after write" << std::endl;  
       H5Pclose(plist_id);
       status = H5Sclose (filespace);
   
       pDataSet.entries++;
-    
     }
 }
 

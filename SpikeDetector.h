@@ -42,7 +42,7 @@ public:
 	spikes_dists.push_back(dist);
       }
       else {
-	std::cout << "SpikeDetector error: spikedetector has already signed nup" << std::endl;
+	std::cout << "SpikeDetector error: spikedetector has already signed up" << std::endl;
       }
   }
   
@@ -57,7 +57,7 @@ public:
   {
       for (int n=0; n<neuron_ids.size(); n++) {
 	//std::cout << "update SpikeDetector " << neuron_ids.at(n) << std::endl;
-	int spikes = (int)nestio::rand2(spikes_dists.at(n));
+	int spikes = (int)spikes_dists.at(n).getValue();
 	for (int i=0; i<spikes; i++) {
 	    //std::cout << "record_spike" << std::endl;
 	    logger->record_spike(neuron_ids.at(n), timestamp);

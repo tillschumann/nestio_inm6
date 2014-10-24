@@ -16,6 +16,8 @@ struct Multi  {
 int main(int argc, char *argv[])
 {
   std::cout << "read sion file" << std::endl;
+  
+  //output varibales for sion_open function
   sion_int32 fsblksize;
   sion_int64 *chunksize = NULL;
   int *globalranks = NULL;
@@ -25,6 +27,7 @@ int main(int argc, char *argv[])
   
   int sid = sion_open("multi_log.sion", "rb", &ntasks, &nfiles, &chunksize, &fsblksize, &globalranks, &fileptr);
   
+  //values are now know
   std::cout << "ntasks=" << ntasks << std::endl;
   std::cout << "fsblksize=" << fsblksize << std::endl;
   std::cout << "chunksize[0]="<< chunksize[0] << std::endl;
@@ -36,10 +39,13 @@ int main(int argc, char *argv[])
   int startBody;
   double Tresolution;
   
+  //iterating the nodes(tasks)
   for (int task=0; task<ntasks; task++) {
     
+    //seek to chunks of task
     sion_seek(sid, task, 0,0);
     
+    //read values
     sion_fread(&NodesCount, sizeof(int), 1,sid);
     sion_fread(&Tstart, sizeof(double), 1,sid);
     sion_fread(&T, sizeof(double), 1,sid);
@@ -54,8 +60,9 @@ int main(int argc, char *argv[])
     std::cout << "numberOfRecords=" << numberOfRecords << std::endl;
     std::cout << "startBody=" << startBody << std::endl;
     
+    
+    //read and store header information 
     std::map<int,Multi> idMap;
-
     for (int i=0; i<NodesCount; i++) {
       int multi_id;
       Multi multi;
@@ -63,7 +70,6 @@ int main(int argc, char *argv[])
       double interval;
       int numberOfValues;
       sion_fread(&multi_id, sizeof(int), 1,sid);
-      //sion_fread(&multi.neuron_id, sizeof(int), 1,sid);
       sion_fread(&multi.interval, sizeof(double), 1,sid);
       sion_fread(&multi.numberOfValues, sizeof(int), 1,sid);
       for (int v=0; v<multi.numberOfValues; v++) {
@@ -86,31 +92,33 @@ int main(int argc, char *argv[])
     }
     
     double v[10];
-  std::cout << "BODY" << std::endl;
-  while (sion_feof(sid)<1) {
-    int multi_id;
-    int neuron_id;
-    int numberOfValues;
-    int timestamp;
-    sion_fread(&multi_id, sizeof(int), 1, sid);
-    sion_fread(&neuron_id, sizeof(int), 1, sid);
-    sion_fread(&timestamp, sizeof(int), 1, sid);
-    sion_fread(&numberOfValues, sizeof(int), 1, sid);
+    std::cout << "BODY" << std::endl;
     
-    if (numberOfValues != idMap[multi_id].numberOfValues)
-      std::cout << "ERROR: numberOfValues != idMap[multi_id].numberOfValues" << std::endl;
-    
-    std::cout << "multimeter_id=" << multi_id << "\tneuron_id=" << neuron_id << "\ttimestamp=" << timestamp << "\t";
-    sion_fread(&v, sizeof(double),idMap[multi_id].numberOfValues,sid);
-    std::cout << idMap[multi_id].valuesNames.at(0) << "=" << v[0];
-    for (int i=1; i<idMap[multi_id].numberOfValues; i++) {
-      std::cout << "\t" << idMap[multi_id].valuesNames.at(i) << "=" << v[i];
+    //read body of file
+    while (sion_feof(sid)<1) {
+      int multi_id;
+      int neuron_id;
+      int numberOfValues;
+      int timestamp;
+      sion_fread(&multi_id, sizeof(int), 1, sid);
+      sion_fread(&neuron_id, sizeof(int), 1, sid);
+      sion_fread(&timestamp, sizeof(int), 1, sid);
+      sion_fread(&numberOfValues, sizeof(int), 1, sid);
+      
+      if (numberOfValues != idMap[multi_id].numberOfValues)
+	std::cout << "ERROR: numberOfValues != idMap[multi_id].numberOfValues" << std::endl;
+      
+      std::cout << "multimeter_id=" << multi_id << "\tneuron_id=" << neuron_id << "\ttimestamp=" << timestamp << "\t";
+      sion_fread(&v, sizeof(double),idMap[multi_id].numberOfValues,sid);
+      std::cout << idMap[multi_id].valuesNames.at(0) << "=" << v[0];
+      for (int i=1; i<idMap[multi_id].numberOfValues; i++) {
+	std::cout << "\t" << idMap[multi_id].valuesNames.at(i) << "=" << v[i];
+      }
+      std::cout << std::endl;
     }
-    std::cout << std::endl;
   }
-  }
+
   
-  
-  
+  //close file
   sion_close(sid);
 };

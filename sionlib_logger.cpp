@@ -4,37 +4,56 @@
 #include "sstream"
 #include <omp.h>
 
-/**
-	data is buffered
-*/
-/*void Sionlib_logger::single_write(double& t, int& v, const int ptr)
-{
-	/*values.push_back(v);
-	if (values.size()>=buf_size) {
-		write(&values[0], ptr);
-		values.clear();
-	}*/
-	/*write(t, (char*)&v, sizeof(int), ptr);
-}*/
-
-/*void Sionlib_logger::single_write(double& t, double& v, const int ptr)
-{
-	write(t, (char*)&v, sizeof(double), ptr);
-}*/
 
 template <class T> const T& min (const T& a, const T& b) {
   return !(b<a)?a:b;     // or: return !comp(b,a)?a:b; for version (2)
 }
 
+void Sionlib_logger::brecord_spike(int neuron_id, double t)
+{
+  if (buffer_spike.isFull())
+  {
+    fwrite(buffer_spike.read(), buffer_spike.getSize(), 1, spike_fileptr);
+    buffer_spike.clear();
+  }
+  else
+  {
+    buffer_spike << neuron_id << t;
+  }
+}
+
+void Sionlib_logger::brecord_multi(int neuron_id, int timestamp, double* v)
+{
+  if (buffer_spike.isFull())
+  {
+    fwrite(buffer_spike.read(), buffer_spike.getSize(), 1, spike_fileptr);
+    buffer_spike.clear();
+  }
+  else
+  {
+    int multimeter_id=-1;
+    int numberOfValues=0;
+    for (int i=0; i<header_multi.NodesCount;i++) {
+      if (header_multi.nodes[i].owner_id==neuron_id) {
+	multimeter_id = header_multi.nodes[i].owner_id;
+	numberOfValues = header_multi.nodes[i].numberOfValues;
+      }
+    }
+    buffer_spike << multimeter_id << neuron_id << timestamp << numberOfValues;
+    for (int i=0; i<numberOfValues; i++)
+    {
+      buffer_spike << *(v+sizeof(double)*i);
+    }
+  }
+}
+
 void Sionlib_logger::record_spike(int neuron_id, double t)
 {
-    std::cout << "record_spike" << std::endl;
-    sion_ensure_free_space(spike_sid, sizeof(int)+sizeof(double));
+    sion_ensure_free_space(spike_sid, 2*sizeof(int)+sizeof(double));
+    //int spikedetector_id = getSpikedetectorId(neuron_id);
+    //fwrite(&spikedetector_id, sizeof(int), 1, spike_fileptr);
     fwrite(&neuron_id, sizeof(int), 1, spike_fileptr);
     fwrite(&t, sizeof(double), 1, spike_fileptr);
-    std::cout << "record_spike ..end" << std::endl;
-    
-    //missing: writing weights
 }
 
 void Sionlib_logger::record_multi(int neuron_id, int timestamp, double* v)
@@ -65,6 +84,9 @@ void Sionlib_logger::signup_multi(int id, int size, int buf)
   //
 }
 
+/*
+ * Collecting header informations for SpikeDetectors
+ */
 void Sionlib_logger::signup_spike(SpikeDetector<Sionlib_logger>* spike, int neuron_id, int buf)
 {
 #pragma omp critical
@@ -77,6 +99,9 @@ void Sionlib_logger::signup_spike(SpikeDetector<Sionlib_logger>* spike, int neur
   }
 }
 
+/*
+ * Collecting header informations for Multimeters
+ */
 void Sionlib_logger::signup_multi(Multimeter<Sionlib_logger>* multi, int neuron_id, int buf)
 {
 #pragma omp critical
@@ -92,6 +117,9 @@ void Sionlib_logger::signup_multi(Multimeter<Sionlib_logger>* multi, int neuron_
   }
 }
 
+/*
+ *  Write header to sion files: Spikedetector and Multimeter file
+ */
 void Sionlib_logger::createDatasets()
 {
 #pragma omp single
@@ -102,12 +130,14 @@ void Sionlib_logger::createDatasets()
   //
   // create Spike createDatasets
   //
-  
   fwrite(&header_spike.NodesCount, sizeof(int), 1, spike_fileptr);
   fwrite(&simSettings.Tstart, sizeof(double), 1, spike_fileptr);
   fwrite(&simSettings.T, sizeof(double), 1, spike_fileptr);
   fwrite(&simSettings.Tresolution, sizeof(double), 1, spike_fileptr); // should be Tresolution
   fwrite(&numberOfRecords, sizeof(int), 1, spike_fileptr);
+  
+  
+  buffer_spike.extend(10*(sizeof(int)+sizeof(double)));
   
   // !!!!! caution
   startOfBody = 3*sizeof(int)+2*sizeof(double)+header_spike.NodesCount*(2*sizeof(int));
@@ -121,13 +151,15 @@ void Sionlib_logger::createDatasets()
   //
   // create Multidatasets
   //
+  int buffer_row_size_multi=0;
+  
   fwrite(&header_multi.NodesCount, sizeof(int), 1, multi_fileptr);
   fwrite(&simSettings.Tstart, sizeof(double), 1, multi_fileptr);
   fwrite(&simSettings.T, sizeof(double), 1, multi_fileptr);
   fwrite(&simSettings.Tresolution, sizeof(double), 1, multi_fileptr); // should be Tresolution
   fwrite(&numberOfRecords, sizeof(int), 1, multi_fileptr);
   
-  // !!!!! caution
+  // !!!!! caution startOfBody has to be set correctly
   startOfBody = 3*sizeof(int)+2*sizeof(double)+header_multi.NodesCount*(3*sizeof(int)+sizeof(double));
   for (int i=0; i<header_multi.NodesCount;i++)
     startOfBody += header_multi.NodesCount*header_multi.nodes[i].numberOfValues*sizeof(char)*20;
@@ -138,8 +170,9 @@ void Sionlib_logger::createDatasets()
     //fwrite(&header_multi.nodes[i].owner_id, sizeof(int), 1, multi_fileptr);
     fwrite(&header_multi.nodes[i].interval, sizeof(double), 1, multi_fileptr);
     fwrite(&header_multi.nodes[i].numberOfValues, sizeof(int), 1, multi_fileptr);
+    
+    buffer_row_size_multi += sizeof(double);
     for (int j=0; j<header_multi.nodes[i].numberOfValues; j++) {
-      //std::cout << "j=" << j << std::endl;
       fwrite(header_multi.nodes[i].valueNames[j], sizeof(char), 20, multi_fileptr);
     }
       
@@ -147,8 +180,11 @@ void Sionlib_logger::createDatasets()
   }
 }
 
+/*
+ * Init sion file
+ */
 Sionlib_logger::Sionlib_logger(std::string filename, int ibuf_size, nestio::SimSettings &simSettings)
-:simSettings(simSettings)
+:simSettings(simSettings), buffer_multi(10,10), buffer_spike(10,10)
 {
 	//std::cout << "create logger in thread "<< omp_get_thread_num() << std::endl;
         header_multi.NodesCount=0;
@@ -164,8 +200,10 @@ Sionlib_logger::Sionlib_logger(std::string filename, int ibuf_size, nestio::SimS
 	/* MPI */
 	MPI_Comm_rank(MPI_COMM_WORLD, &own_id);
 	MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
+	
 	/* open parameters */
-	numFiles = 1; fsblksize = -1;
+	numFiles = 1; //internal sion can write to more than one file -> filesystem/performance
+	fsblksize = -1;
 	
 	std::stringstream spike_ss, multi_ss;
 	spike_ss << "spikes_" << filename;
@@ -191,21 +229,21 @@ Sionlib_logger::Sionlib_logger(std::string filename, int ibuf_size, nestio::SimS
 }
 
 
-
+/*
+ * close sion files
+ */
 Sionlib_logger::~Sionlib_logger()
 {
-	//data in buffer is ignored @TODO
 
 	sion_parclose_mpi(multi_sid);
 	sion_parclose_mpi(spike_sid);
 }
 
-void Sionlib_logger::setBufferSize(int s)
-{
-		buf_size = s;
-}
 
-//could be used to call sion_ensure_free_space
+/*
+ * called during the sync step
+ * could be used to call sion_ensure_free_space
+ */
 void Sionlib_logger::updateDatasetSizes()
 {
 	//

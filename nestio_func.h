@@ -6,15 +6,39 @@
 #include <random>
 #include <iostream>
 
+#include <tr1/random>
+
 #ifndef NESTIO_FUNC
 #define NESTIO_FUNC
 
 namespace nestio
 {
-  struct Distribution {
+  class Distribution
+  {
+  private:
+    std::tr1::ranlux64_base_01 eng;
+    std::tr1::normal_distribution<double> normal;
+  public:
+    Distribution(): mean(0), var(1), normal(0, 1)
+    {}
+    Distribution(double mean, double var): mean(mean), var(var), normal(mean, sqrt(var))
+    {}
+    double getValue()
+    {
+      return normal(eng);
+    }
     double mean;
     double var;
+    
+    Distribution & operator= (const Distribution & other)
+    {
+      eng = other.eng;
+      normal = other.normal;
+      mean = other.mean;
+      var = other.var;
+    } 
   };
+  
   
   struct SimSettings {
    double Tstart;
@@ -29,7 +53,7 @@ namespace nestio
     int numberOfSpikeDetectorsPerThread;
     int numberOfMultimetersPerThread;
     Distribution spikesPerDector;
-    Distribution samlpingIntervalsOfMeter;
+    Distribution samplingIntervalsOfMeter;
     Distribution numberOfValuesWrittenByMeter;
     Distribution deadTimeSpikeDetector;
     Distribution deadTimeMultimeters;

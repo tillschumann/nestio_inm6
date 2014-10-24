@@ -175,6 +175,7 @@ public:
     delete values;
   }
   
+  //critical function
   void push_back(T v)
   {
     values[n]=v;
