@@ -1,29 +1,30 @@
+#ifndef SPIKEDETECTOR_CLASS
+#define SPIKEDETECTOR_CLASS
+
 #include <random>
 #include <cmath>
 #include <iostream>
 #include <vector>
 //#include "NESTProxy.h"
 #include "nestio_func.h"
-
-#ifndef SPIKEDETECTOR_CLASS
-#define SPIKEDETECTOR_CLASS
+#include "abstract_logger.h"
 
 //double rand_value(double var,double mean);
 
-template < typename L >
+//template < typename L >
 class SpikeDetector {
 private:
   
   //nestio::Distribution spikes_dist;
-  nestio::Distribution deadTime;
-  L* logger;
+  nestio::IDistribution deadTime;
+  ILogger* logger;
   bool isSinup;
   
 public:
   int spikedetector_id;
   std::vector<int> neuron_ids;
-  std::vector<nestio::Distribution> spikes_dists;
-  SpikeDetector(const int spikedetector_id, L* logger): 
+  std::vector<nestio::IDistribution*> spikes_dists;
+  SpikeDetector(const int spikedetector_id, ILogger* logger): 
   spikedetector_id(spikedetector_id),
   logger(logger),
   isSinup(false)
@@ -35,7 +36,7 @@ public:
     //logger->signup_spike(neuron_id, 1000, 1);
     //logger->signup_spike(this,1000);
   };
-  void connect2Neuron(int id, nestio::Distribution dist)
+  void connect2Neuron(int id, nestio::IDistribution* dist)
   {
       if (!isSinup) {
 	neuron_ids.push_back(id);
@@ -57,7 +58,7 @@ public:
   {
       for (int n=0; n<neuron_ids.size(); n++) {
 	//std::cout << "update SpikeDetector " << neuron_ids.at(n) << std::endl;
-	int spikes = (int)spikes_dists.at(n).getValue();
+	int spikes = (int)spikes_dists.at(n)->getValue();
 	for (int i=0; i<spikes; i++) {
 	    //std::cout << "record_spike" << std::endl;
 	    logger->record_spike(neuron_ids.at(n), timestamp);

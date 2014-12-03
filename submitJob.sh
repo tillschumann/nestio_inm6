@@ -16,7 +16,7 @@
 #PBS -N hdf5experiment
 
 ### set the number of nodes and processes per node (ppn)
-#PBS -l select=5:ppn=7
+#PBS -l select=2:ppn=2
 
 ### mail alert at (b)eginning, (e)nd and (a)bortion of execution
 ##PBS -m bea
@@ -72,12 +72,13 @@ echo "------------------------------------------------------"
 ### start job from the directory it was submitted
 cd $PBS_O_WORKDIR
 
-export OMP_NUM_THREADS=7
-export MPI_NODE_COUNT=5
+export MPI_NODE_COUNT=2
+export OMP_NUM_THREADS=2
+
 
 ### execute script
 #CMP="scalasca -analyze -e ${PBS_JOBID}_${MPI_NODE_COUNT}_${OMP_NUM_THREADS} mpirun -np ${MPI_NODE_COUNT} ./runNESTProxy"
-CMP="mpirun -np ${MPI_NODE_COUNT} ./runNESTProxy"
+CMP="mpirun -np ${MPI_NODE_COUNT} ./runNESTProxy ${PBS_JOBID}"
 #CMP="mpirun -np 2 ./test_sionlib"
 
 echo "$CMP"

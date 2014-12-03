@@ -92,6 +92,11 @@ public:
      * Resets the SeriesTimer.
      */
     void reset();
+    
+    /** 
+     * Pause the SeriesTimer.
+     */
+    void pause();
 
     /** 
      * Returns the individual timings in the requested timeunit.
@@ -126,6 +131,9 @@ public:
 	       
     void print_csv(const char* msg, Stopwatch::timeunit_t timeunit, 
                std::ostream& os) const;
+	       
+    void print_all_csv(const char* msg, Stopwatch::timeunit_t timeunit, 
+               std::ostream& os) const;
     
     /**
      * Convenient method for writing time in seconds
@@ -137,7 +145,8 @@ public:
 private:
 #ifdef ENABLE_TIMING
     Stopwatch _stopwatch;
-    OVector<Stopwatch::timestamp_t> _timestamps;
+    //OVector<Stopwatch::timestamp_t> _timestamps;
+    std::vector<Stopwatch::timestamp_t> _timestamps; 
 #endif
 };
 

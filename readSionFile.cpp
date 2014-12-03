@@ -13,7 +13,8 @@ struct Multi  {
   std::vector<std::string> valuesNames;
 };
 
-int main(int argc, char *argv[])
+
+int readMultiFile()
 {
   std::cout << "read sion file" << std::endl;
   
@@ -47,14 +48,12 @@ int main(int argc, char *argv[])
     
     //read values
     sion_fread(&NodesCount, sizeof(int), 1,sid);
-    sion_fread(&Tstart, sizeof(double), 1,sid);
     sion_fread(&T, sizeof(double), 1,sid);
     sion_fread(&Tresolution, sizeof(double), 1,sid);
     sion_fread(&numberOfRecords, sizeof(int), 1,sid);
     sion_fread(&startBody, sizeof(int), 1,sid);
     
     std::cout << "NodesCount=" << NodesCount << std::endl;
-    std::cout << "Tstart=" << Tstart << std::endl;
     std::cout << "T=" << T << std::endl;
     std::cout << "Tresolution=" << Tresolution << std::endl;
     std::cout << "numberOfRecords=" << numberOfRecords << std::endl;
@@ -121,4 +120,45 @@ int main(int argc, char *argv[])
   
   //close file
   sion_close(sid);
+  return 0;
+}
+
+
+int readSpikeFile()
+{
+  sion_int32 fsblksize;
+  sion_int64 *chunksize = NULL;
+  int *globalranks = NULL;
+  int ntasks;
+  int nfiles;
+  int sid = sion_open("spikes_log.sion", "rb", &ntasks, &nfiles, &chunksize, &fsblksize, &globalranks, NULL);
+  
+  std::cout << ntasks << std::endl;
+  
+  for (int task=0; task<ntasks; task++) {
+    
+    int nodesCount;
+    double T;
+    double Tresolution;
+    int numberOfRecords;
+    int startOfBody;
+    
+    sion_fread(&nodesCount, sizeof(int), 1, sid);
+    sion_fread(&simSettings.T, sizeof(double), 1, sid);
+    sion_fread(&simSettings.Tresolution, sizeof(double), 1, sid); // should be Tresolution
+    sion_fread(&numberOfRecords, sizeof(int), 1, sid);
+    sion_fread(&startOfBody, sizeof(int), 1, sid);
+    
+    
+    
+  }
+  
+  
+  sion_close(sid);
+  return 0;
+}
+
+int main(int argc, char *argv[])
+{
+  readSpikeFile();
 };

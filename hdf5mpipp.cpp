@@ -67,43 +67,51 @@ void HDF5mpipp::setBufferSize(int s)
 	buf_size = s;
 }
 
-int predictSpikeMemSpace(PrivateDataSet &dataset) {
-
+int HDF5mpipp::predictSpikeMemSpace(const double& t, PrivateDataSet &dataset)
+{
+    if (dataset.entries+100 > dataset.head.size) {
+      //linear interpolation:
+      dataset.head.size = dataset.entries+(int)((double)dataset.entries / (t / (simSettings.T-t))) + 100;
+      
+      //const offset
+      //dataset.buffer_size = dataset.entries + 1000;
+      return dataset.head.size;
+    }
     return -1;
 }
 
 /**
 	extend the dataset sizes
 */
-void HDF5mpipp::updateDatasetSizes()
+void HDF5mpipp::updateDatasetSizes(const double& t)
 {
-	updateSpikeDataSets();
+	updateSpikeDataSets(t);
 }
 
-void HDF5mpipp::updateSpikeDataSets()
+void HDF5mpipp::updateSpikeDataSets(const double& t)
 {
 #pragma omp single
   {
-    std::cout << "updateSpikeDataSets" << std::endl;
+   // std::cout << "updateSpikeDataSets" << std::endl;
     const int ownNumber = private_ptr_spike_datasets.size();
     const int totalNumber = spike_datasets.size();
     
     if (totalNumber>0) {
       int send_newmemsize[ownNumber];
       for (int i=0;i<ownNumber;i++)
-	send_newmemsize[i] = predictSpikeMemSpace(spike_datasets[private_ptr_spike_datasets[i]]);
+	send_newmemsize[i] = predictSpikeMemSpace(t,spike_datasets[private_ptr_spike_datasets[i]]);
       
       int recv_newmemsize[totalNumber];
       MPI_Allgatherv(send_newmemsize, ownNumber, MPI_INT, recv_newmemsize, &global_number_spike[0], &global_shift_spike[0], MPI_INT, MPI_COMM_WORLD);
 
-      for (int i=0; i<clientscount; i++) {
+      for (int i=0; i<totalNumber; i++) {
 	if (recv_newmemsize[i] > 0) {
 	  hsize_t size[2]={recv_newmemsize[i],1};
 	  H5Dset_extent(spike_datasets.at(i).dset_id, size);
 	}
       }
     }
-    std::cout << "updateSpikeDataSets end" << std::endl;
+    //std::cout << "updateSpikeDataSets end" << std::endl;
   }
     
 }
@@ -117,9 +125,9 @@ void HDF5mpipp::record_spike(int neuron_id, int timestamp)
 	  pDataSet = &spike_datasets[i];
 	}
     }
-    std::cout << neuron_id << ": spike recording: space for " << pDataSet->head.size-pDataSet->entries << " more spikes" << std::endl;
+    //std::cout << neuron_id << ": spike recording: space for " << pDataSet->head.size-pDataSet->entries << " more spikes" << std::endl;
     storeContinuousAnalogSignal(*pDataSet, timestamp, NULL);
-    std::cout << "storeContinuousAnalogSignal end" << std::endl;
+    //std::cout << "storeContinuousAnalogSignal end" << std::endl;
 }	
 
 void HDF5mpipp::storeContinuousAnalogSignal(PrivateDataSet &pDataSet, int timestamp, double* v)
@@ -387,7 +395,7 @@ void HDF5mpipp::registerHDF5DataSet(PrivateDataSet &dataset, bool isPrivateDatas
   status = H5Sclose (filespace);
 }
 
-void HDF5mpipp::signup_spike(SpikeDetector<HDF5mpipp>* spike, int neuron_id, int expectedsize)
+void HDF5mpipp::signup_spike(SpikeDetector* spike, int neuron_id, int expectedsize)
 {  
   #pragma omp critical
   {
@@ -398,11 +406,11 @@ void HDF5mpipp::signup_spike(SpikeDetector<HDF5mpipp>* spike, int neuron_id, int
   }
 }
 
-void HDF5mpipp::signup_multi(Multimeter<HDF5mpipp>* multi, int neuron_id, int buf)
+void HDF5mpipp::signup_multi(Multimeter* multi, int neuron_id, int buf)
 {
 #pragma omp critical
   {
-    signup_multi(multi->multimeter_id, neuron_id, (simSettings.T-simSettings.Tresolution)/multi->samlpingInterval, multi->numberOfValues);
+    signup_multi(multi->multimeter_id, neuron_id, (simSettings.T)/multi->samlpingInterval, multi->numberOfValues);
     
     //not nice!!
     multi_ptrs.push_back(multi);
@@ -413,7 +421,7 @@ void HDF5mpipp::signup_spike(int id, int neuron_id, int expectedsize, int buf)
 {
   
   std::stringstream datasetname_ss;
-  datasetname_ss << "spike_" << id;
+  datasetname_ss << "spike_" << id << "_neuron_" << neuron_id;
   
   PrivateDataSet ownDataSet;
   ownDataSet.head.id = id;
@@ -424,12 +432,14 @@ void HDF5mpipp::signup_spike(int id, int neuron_id, int expectedsize, int buf)
   ownDataSet.type = 0;
   strcpy(ownDataSet.head.name, datasetname_ss.str().c_str());
   
+  std::cout << "signup_spike:" << datasetname_ss.str() << std::endl;
+  
   spike_datasets.push_back(ownDataSet);
 }
 void HDF5mpipp::signup_multi(int id, int neuron_id, int size, int buf)
 {
   std::stringstream datasetname_ss;
-  datasetname_ss << "multi_" << id;
+  datasetname_ss << "multi_" << id << "_neuron_" << neuron_id;
   
   PrivateDataSet ownDataSet;
   ownDataSet.head.id = id;
@@ -440,5 +450,13 @@ void HDF5mpipp::signup_multi(int id, int neuron_id, int size, int buf)
   ownDataSet.type = 1;
   strcpy(ownDataSet.head.name, datasetname_ss.str().c_str());
   
+  std::cout << "signup_multi:" << datasetname_ss.str() << std::endl;
+  
   multi_datasets.push_back(ownDataSet);
+}
+
+std::ostream& operator << (std::ostream &o, const HDF5mpipp &l)
+{
+  o << "HDF5mpipp";
+  return o;
 }

@@ -91,6 +91,9 @@ public:
      * Stops the stopwatch, if it is not stopped already.
      */
     void stop();
+    
+    
+    void pause();
 
     /**
      * Returns, whether the stopwatch is running.

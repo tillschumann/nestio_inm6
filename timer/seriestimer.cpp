@@ -37,7 +37,7 @@ namespace nest
 
 nest::SeriesTimer::SeriesTimer()
 #ifdef ENABLE_TIMING
-: _stopwatch(), _timestamps(1000)
+: _stopwatch(), _timestamps()
 #endif
 {
 }
@@ -55,6 +55,13 @@ void nest::SeriesTimer::stop()
     _stopwatch.stop();
     _timestamps.push_back(_stopwatch.elapsed_timestamp());
     _stopwatch.reset();
+#endif
+}
+
+void nest::SeriesTimer::pause()
+{
+#ifdef ENABLE_TIMING
+    _stopwatch.pause();
 #endif
 }
 
@@ -169,6 +176,21 @@ double nest::SeriesTimer::quantile(double q, Stopwatch::timeunit_t timeunit) con
     return 1.0 * local[i] / timeunit; // return correct timeunit
 #else
     return 0.0;
+#endif
+}
+
+void nest::SeriesTimer::print_all_csv(const char* msg, Stopwatch::timeunit_t timeunit, 
+               std::ostream& os) const
+{
+#ifdef ENABLE_TIMING
+    assert(Stopwatch::correct_timeunit(timeunit));
+    os << msg;
+    std::cout << msg << " size:" << _timestamps.size() << std::endl;
+    for (int i = 0; i < _timestamps.size(); ++i)
+    {
+        os << ";" << _timestamps[i];
+    }
+    os << "\n";
 #endif
 }
 

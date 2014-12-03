@@ -1,17 +1,18 @@
+#ifndef MULTIMETER_CLASS
+#define MULTIMETER_CLASS
+
 #include <iostream>
 #include <vector>
 #include <sstream>
 #include "nestio_func.h"
+#include "abstract_logger.h"
 
-#ifndef MULTIMETER_CLASS
-#define MULTIMETER_CLASS
-
-template < typename L >
+//template < typename L >
 class Multimeter {
 private:
   double lastRecordT;
   double *values;
-  L* logger;
+  ILogger* logger;
   bool isSinup;
   
 public:
@@ -22,7 +23,7 @@ public:
   std::vector<int> neuron_ids;
   std::vector<std::string> valueNames;
   
-  Multimeter(const int multimeter_id, const double interval, nestio::SimSettings &simSettings, const int numberOfValues, L* logger):
+  Multimeter(const int multimeter_id, const double interval, nestio::SimSettings &simSettings, const int numberOfValues, ILogger* logger):
   multimeter_id(multimeter_id),
   samlpingInterval(simSettings.Tresolution),
   numberOfValues(numberOfValues),

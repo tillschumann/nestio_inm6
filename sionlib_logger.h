@@ -2,6 +2,7 @@
 #include <omp.h>
 #include <sion.h>
 #include <vector>
+#include "abstract_logger.h"
 #include "Multimeter.h"
 #include "SpikeDetector.h"
 
@@ -22,38 +23,42 @@ struct SionFileHeaderNode
 struct SionFileHeader
 {
   int NodesCount;
-  SionFileHeaderNode nodes[10];
+  SionFileHeaderNode nodes[100];
   double Tstart;
   double T;
   double Tresolution;
+  int numberOfWrittenData;
 };
 
 
 class SionBuffer
 {
 private:
-  int dim0;
-  int dim1;
   int ptr;
   int max_size;
   char* buffer;
 public:
-  SionBuffer(int dim0, int dim1): buffer(NULL), ptr(0)
+  SionBuffer(): buffer(NULL), ptr(0)
   {}
+  SionBuffer(int size): ptr(0)
+  {
+    buffer = new char[size];
+    max_size=size;
+  }
   ~SionBuffer()
   {
     delete buffer;
   }
-  void extend(int n)
+  void extend(int size)
   {
     if (buffer==NULL) {
-      buffer = new char[n];
-      max_size=n;
+      buffer = new char[size];
+      max_size=size;
     }
     else {
-      delete buffer;
-      buffer = new char[n+max_size];
-      max_size+=n;
+      delete[] buffer;
+      buffer = new char[size+max_size];
+      max_size+=size;
     }
   }
   void write(const char* v, long unsigned int n)
@@ -68,9 +73,21 @@ public:
     return ptr;
   }
   
-  bool isFull()
+  void getEnoughFreeSpace(int size)
   {
-    return (ptr==max_size);
+    if (!isEnoughFreeSpace(size)) {
+      int new_max_size = max_size+size*10;
+      char* new_buffer = new char[new_max_size];
+      max_size=new_max_size;
+      memcpy(new_buffer,buffer,ptr);
+      delete[] buffer;
+      buffer = new_buffer;
+    }
+  }
+  
+  bool isEnoughFreeSpace(int size)
+  {
+    return (ptr+size<max_size);
   }
   
   void clear()
@@ -92,52 +109,67 @@ SionBuffer& operator<<(SionBuffer& buffer, const T v)
   buffer.write((const char*)&v, sizeof(T));
 }
 
-class Sionlib_logger
+namespace nestio
+{
+  enum SionLoggerType {Standard, Buffered, Collective};
+  
+};
+
+class Sionlib_logger : public ILogger
 {
 	private:
-		int spike_sid;
-		int multi_sid;
-		FILE *spike_fileptr;
-		FILE *multi_fileptr;
+		std::vector<int> spike_sid;
+		std::vector<int> multi_sid;
+		//FILE *spike_fileptr;
+		//FILE *multi_fileptr;
 		std::vector<int> ids;
 		int own_id;
 		sion_int64 buf_size;
 		std::string prefix;
 		std::vector<int> values;
 		//std::vecotr<int> datalenghts;
-		SionFileHeader header_multi;
-		SionFileHeader header_spike;
+		std::vector<SionFileHeader> header_multi;
+		std::vector<SionFileHeader> header_spike;
 		
-		SionBuffer buffer_multi;
-		SionBuffer buffer_spike;
+		SionBuffer* buffer_multi;
+		SionBuffer* buffer_spike;
 		
 		nestio::SimSettings simSettings;
+		
+		nestio::SionLoggerType loggerType;
 		
 		void write(double& t, char* data, const unsigned int datalength, const int ptr);
 		
 	public:
-		Sionlib_logger(std::string, int, nestio::SimSettings&);
+		Sionlib_logger() {};
+		Sionlib_logger(std::string, int, nestio::SionLoggerType, nestio::SimSettings&);
 		~Sionlib_logger();
 		//int newDataSet(const std::string, const int, const int);
 		void setSize(int,int);
 		void setBufferSize(int);
-		void updateDatasetSizes();
+		void updateDatasetSizes(const double& t);
 		//void single_write(double& t, int& v, const int ptr);
 		//void single_write(double& t, double& v, const int ptr);
 		
 		void record_spike(int neuron_id, double t);
 		void record_multi(int multimeter_id, int timestamp, double* v);
 		
+		void srecord_spike(int neuron_id, double t);
+		void srecord_multi(int multimeter_id, int timestamp, double* v);
+		
 		void brecord_spike(int neuron_id, double t);
 		void brecord_multi(int neuron_id, int timestamp, double* v);
 		
-		void signup_spike(int id, int expectedsize, int buf);
-		void signup_spike(SpikeDetector<Sionlib_logger>* spike, int neuron_id, int buf);
-		void signup_multi(int id, int size, int buf);
-		void signup_multi(Multimeter<Sionlib_logger>* multi, int neuron_id, int buf);
+		void crecord_spike(int neuron_id, double t);
+		void crecord_multi(int neuron_id, int timestamp, double* v);
+		
+		void signup_spike(SpikeDetector* spike, int neuron_id, int buf);
+		void signup_multi(Multimeter* multi, int neuron_id, int buf);
 		
 		void createDatasets();
 		
 };
+
+extern std::ostream& operator << (std::ostream &o, const Sionlib_logger &l);
 
 #endif

@@ -5,6 +5,7 @@
 
 #include "Multimeter.h"
 #include "SpikeDetector.h"
+#include "abstract_logger.h"
 
 #ifndef HDF5MPIPP_CLASS
 #define HDF5MPIPP_CLASS
@@ -28,7 +29,7 @@ struct PrivateDataSet {
     hid_t memtype;
 };
 
-class HDF5mpipp
+class HDF5mpipp : public ILogger
 {
 	private:
 		hid_t file;
@@ -63,24 +64,26 @@ class HDF5mpipp
 		std::vector<int> global_number_spike;
 		
 		
-		std::vector<Multimeter<HDF5mpipp>*> multi_ptrs;
-		std::vector<SpikeDetector<HDF5mpipp>*> spike_ptrs;
+		std::vector<Multimeter*> multi_ptrs;
+		std::vector<SpikeDetector*> spike_ptrs;
 		
 		
 		int allocated_mem;
 		
-		void updateSpikeDataSets();
+		int predictSpikeMemSpace(const double& t, PrivateDataSet &dataset);
+		void updateSpikeDataSets(const double& t);
 		void registerHDF5DataSet(PrivateDataSet &dataset, bool isPrivateDataset);
 		void distributeDatasets(std::vector<PrivateDataSet> &private_datasets,std::vector<DataSet> &global_datasets, std::vector<int> &shift, std::vector<int> &global_count, std::vector<int> &private_ptr_datasets);
 		
 	public:
+		HDF5mpipp() {};
 		HDF5mpipp(std::string, int, nestio::SimSettings&);
 		~HDF5mpipp();
 		//void write(int* data);
 		//void newDataSet(std::string, const int, const int);
 		void setSize(int,int);
 		void setBufferSize(int);
-		void updateDatasetSizes();
+		void updateDatasetSizes(const double& t);
 		//void single_write(double& t, int& v, const int ptr);
 		//void single_write(double& t, double& v, const int ptr);
 		
@@ -89,12 +92,15 @@ class HDF5mpipp
 		void signup_spike(int id, int neuron_id, int expectedsize, int buffer_size);
 		void signup_multi(int id, int neuron_id, int exactsize, int buffer_size);
 		
-		void signup_spike(SpikeDetector<HDF5mpipp>* spike, int neuron_id, int buf);
-		void signup_multi(Multimeter<HDF5mpipp>* multi, int neuron_id, int buf);
+		void signup_spike(SpikeDetector* spike, int neuron_id, int buf);
+		void signup_multi(Multimeter* multi, int neuron_id, int buf);
 		
 		void storeContinuousAnalogSignal(PrivateDataSet &pDataSet, int timestamp, double *v);
 		
 		void createDatasets();
 };
+
+
+extern std::ostream& operator << (std::ostream &o, const HDF5mpipp &l);
 
 #endif

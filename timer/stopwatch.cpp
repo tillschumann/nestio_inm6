@@ -39,6 +39,18 @@ nest::Stopwatch::Stopwatch()
     reset();
 }
 
+void 
+nest::Stopwatch::pause()
+{
+#ifdef ENABLE_TIMING
+  if(isRunning())
+    {
+        _end = get_timestamp(); 
+        _running = false;               // we stop running
+    }
+#endif 
+}
+
 void
 nest::Stopwatch::start()
 {

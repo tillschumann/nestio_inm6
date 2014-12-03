@@ -12,8 +12,8 @@ LIB	= -lhdf5 -lrt -lz -lsz
 INCLUDE   = -I$(HDF_INSTALL)/include
 LIBSHDF   = $(EXTLIB) $(HDF_INSTALL)/lib/libhdf5_cpp.a
 
-MPISIONLIB =  `~/sionlib/install/sionlib_linux_gomp/bin/sionconfig --libs --mpi -be -64`
-MPISIONCFLAGS = `~/sionlib/install/sionlib_linux_gomp/bin/sionconfig --cflags --mpi -be -64` 
+MPISIONLIB =  `~/sionlib/install/sionlib_linux_gomp/bin/sionconfig --libs --ompi -be -64`
+MPISIONCFLAGS = `~/sionlib/install/sionlib_linux_gomp/bin/sionconfig --cflags --ompi -be -64` 
 
 SERSIONLIB =  `~/sionlib/install/sionlib_linux_gomp/bin/sionconfig --libs --ser -be -64`
 SERSIONCFLAGS = `~/sionlib/install/sionlib_linux_gomp/bin/sionconfig --cflags --ser -be -64` 
@@ -21,14 +21,17 @@ SERSIONCFLAGS = `~/sionlib/install/sionlib_linux_gomp/bin/sionconfig --cflags --
 all: hdf5mpipp \
  
 
-hdf5mpipp: sionlib_logger.o NESTProxy.o nestio_func.o hdf5mpipp.o AsciiLogger.o SpikeDetector.o Multimeter.o runNESTProxy.o seriestimer.o stopwatch.o scopetimer.o
-	$(CC) $(CFLAGS) -o runNESTProxy runNESTProxy.o nestio_func.o hdf5mpipp.o NESTProxy.o sionlib_logger.o AsciiLogger.o SpikeDetector.o Multimeter.o seriestimer.o stopwatch.o scopetimer.o $(INCLUDE) $(LIBSHDF) $(MPISIONLIB) $(LIB)
+hdf5mpipp: sionlib_logger.o NESTProxy.o nestio_func.o abstract_logger.o hdf5mpipp.o AsciiLogger.o SpikeDetector.o Multimeter.o runNESTProxy.o seriestimer.o stopwatch.o scopetimer.o
+	$(CC) $(CFLAGS) -o runNESTProxy runNESTProxy.o abstract_logger.o nestio_func.o hdf5mpipp.o NESTProxy.o sionlib_logger.o AsciiLogger.o SpikeDetector.o Multimeter.o seriestimer.o stopwatch.o scopetimer.o $(INCLUDE) $(LIBSHDF) $(MPISIONLIB) $(LIB)
 	
 runNESTProxy.o: runNESTProxy.cpp
 	$(CC) $(CFLAGS) $(MPISIONCFLAGS) -c runNESTProxy.cpp $(INCLUDE)
 	
+abstract_logger.o: abstract_logger.cpp abstract_logger.h
+	$(CC) $(CFLAGS) -fPIC -c abstract_logger.cpp $(INCLUDE)
+	
 nestio_func.o: nestio_func.cpp
-	$(CC) $(CFLAGS) -c nestio_func.cpp $(INCLUDE)
+	$(CC) $(CFLAGS) -fPIC -c nestio_func.cpp $(INCLUDE)
 
 hdf5mpipp.o: hdf5mpipp.cpp
 	$(CC) $(CFLAGS) -c hdf5mpipp.cpp $(INCLUDE)
@@ -66,6 +69,11 @@ testRand: testRand.o nestio_func.o
 testRand.o: testRand.cpp
 	$(CC) $(CFLAGS) -c testRand.cpp $(INCLUDE)
 	
+RandomGenerator.so: RandomGenerator.o nestio_func.o
+	g++ $(CFLAGS) -shared RandomGenerator.o nestio_func.o -lpython2.6 -o RandomGenerator.so
+	
+RandomGenerator.o: RandomGenerator.cpp
+	g++ $(CFLAGS) -c -fPIC -I/usr/include/python2.6/ RandomGenerator.cpp
 clean: 
 	rm -f *.h5 *.o \
  
