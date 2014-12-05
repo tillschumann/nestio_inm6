@@ -177,7 +177,7 @@ int main(int argc, char *argv[])
 	simSettings.Tresolution=0.1;
 	
 	nestio::Configuration conf;
-	conf.logger = nestio::ASCII;
+	conf.logger = nestio::SIONLIB;
 	conf.bufferSize = 100;
 	conf.numberOfThreads=new nestio::FixIntValue(numberOfThreads);
 	conf.numberOfSpikeDetectorsPerThread=new nestio::FixIntValue(2);

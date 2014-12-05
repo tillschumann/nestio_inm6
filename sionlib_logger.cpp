@@ -130,10 +130,17 @@ void Sionlib_logger::signup_spike(SpikeDetector* spike, int neuron_id, int buf)
   const int thread_num = omp_get_thread_num();
 #pragma omp critical
   {
-    header_spike[thread_num].nodes[header_spike[thread_num].NodesCount].neuron_id=neuron_id;
-    header_spike[thread_num].nodes[header_spike[thread_num].NodesCount].id=spike->spikedetector_id;
-    header_spike[thread_num].nodes[header_spike[thread_num].NodesCount].interval=0;
-    header_spike[thread_num].nodes[header_spike[thread_num].NodesCount].type=2;
+    SionFileHeaderNode node;
+    node.neuron_id=neuron_id;
+    node.id=spike->spikedetector_id;
+    node.interval=0;
+    
+    header_spike[thread_num].nodes.push_back(node);
+    
+    
+    //header_spike[thread_num].nodes[header_spike[thread_num].NodesCount].neuron_id=neuron_id;
+    //header_spike[thread_num].nodes[header_spike[thread_num].NodesCount].id=spike->spikedetector_id;
+    //header_spike[thread_num].nodes[header_spike[thread_num].NodesCount].interval=0;
     header_spike[thread_num].NodesCount++;
   }
 }
@@ -146,13 +153,25 @@ void Sionlib_logger::signup_multi(Multimeter* multi, int neuron_id, int buf)
   const int thread_num = omp_get_thread_num();
 #pragma omp critical
   {
-    header_multi[thread_num].nodes[header_multi[thread_num].NodesCount].id=multi->multimeter_id;
-    header_multi[thread_num].nodes[header_multi[thread_num].NodesCount].neuron_id=neuron_id;
-    header_multi[thread_num].nodes[header_multi[thread_num].NodesCount].interval=multi->samlpingInterval;
-    header_multi[thread_num].nodes[header_multi[thread_num].NodesCount].numberOfValues=multi->numberOfValues;   //Work around
+    SionFileHeaderNode node;
+    node.id=multi->multimeter_id;
+    node.neuron_id=neuron_id;
+    node.interval=multi->samlpingInterval;
+    node.numberOfValues=multi->numberOfValues;
     for (int i=0; i<multi->numberOfValues; i++) {
-      memcpy(header_multi[thread_num].nodes[header_multi[thread_num].NodesCount].valueNames[i],multi->valueNames.at(i).c_str(), min(20,(int)multi->valueNames.at(i).size()));
+      memcpy(node.valueNames[i],multi->valueNames.at(i).c_str(), min(20,(int)multi->valueNames.at(i).size()));
     }
+    
+    header_multi[thread_num].nodes.push_back(node);
+    
+    
+    //header_multi[thread_num].nodes[header_multi[thread_num].NodesCount].id=multi->multimeter_id;
+    //header_multi[thread_num].nodes[header_multi[thread_num].NodesCount].neuron_id=neuron_id;
+    //header_multi[thread_num].nodes[header_multi[thread_num].NodesCount].interval=multi->samlpingInterval;
+    //header_multi[thread_num].nodes[header_multi[thread_num].NodesCount].numberOfValues=multi->numberOfValues;   //Work around
+    //for (int i=0; i<multi->numberOfValues; i++) {
+    //  memcpy(header_multi[thread_num].nodes[header_multi[thread_num].NodesCount].valueNames[i],multi->valueNames.at(i).c_str(), min(20,(int)multi->valueNames.at(i).size()));
+    //}
     header_multi[thread_num].NodesCount++;
   }
 }
@@ -217,7 +236,7 @@ void Sionlib_logger::createDatasets()
 /*
  * Init sion file
  */
-Sionlib_logger::Sionlib_logger(std::string sfn, std::string mfn, int ibuf_size, nestio::SionLoggerType loggerType, nestio::SimSettings &simSettings)
+Sionlib_logger::Sionlib_logger(std::string sfn, std::string mfn, sion_int64 buf_size, nestio::SionLoggerType loggerType, nestio::SimSettings &simSettings)
 :simSettings(simSettings), loggerType(loggerType)
 {
 	//std::cout << "create logger in thread "<< omp_get_thread_num() << std::endl;
@@ -244,14 +263,13 @@ Sionlib_logger::Sionlib_logger(std::string sfn, std::string mfn, int ibuf_size, 
 	  
 	  
 	  /* SION parameters */
-	  buf_size = ibuf_size;
-	  int numFiles, own_id, num_procs;
+	  int numFiles, rank, num_procs;
 	  MPI_Comm lComm;
 	  //sion_int64 left, bwrote;
 	  sion_int32 fsblksize;
 	  char *newfname=NULL;
 	  /* MPI */
-	  MPI_Comm_rank(MPI_COMM_WORLD, &own_id);
+	  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	  MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 	  
 	  /* open parameters */
@@ -266,14 +284,14 @@ Sionlib_logger::Sionlib_logger(std::string sfn, std::string mfn, int ibuf_size, 
 	  spike_sid[thread_num] = sion_paropen_ompi(spike_fname, "bw", &numFiles,
 	  MPI_COMM_WORLD, &lComm,
 	  &buf_size, &fsblksize,
-	  &own_id,
+	  &rank,
 	  NULL, &newfname);
 	  
 	  /* create a new file */
 	  multi_sid[thread_num] = sion_paropen_ompi(multi_fname, "bw", &numFiles,
 	  MPI_COMM_WORLD, &lComm,
 	  &buf_size, &fsblksize,
-	  &own_id,
+	  &rank,
 	  NULL, &newfname);
 	}
 	
