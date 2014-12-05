@@ -87,7 +87,7 @@ class HDF5mpipp : public ILogger
 		//void single_write(double& t, int& v, const int ptr);
 		//void single_write(double& t, double& v, const int ptr);
 		
-		void record_spike(int neuron_id, int timestamp);
+		void record_spike(SpikeDetector* spike, int neuron_id, int timestamp);
 		void record_multi(int neuron_id, int timestamp, double* v);
 		void signup_spike(int id, int neuron_id, int expectedsize, int buffer_size);
 		void signup_multi(int id, int neuron_id, int exactsize, int buffer_size);

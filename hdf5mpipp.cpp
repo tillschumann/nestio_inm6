@@ -116,7 +116,7 @@ void HDF5mpipp::updateSpikeDataSets(const double& t)
     
 }
 
-void HDF5mpipp::record_spike(int neuron_id, int timestamp)
+void HDF5mpipp::record_spike(SpikeDetector* spike, int neuron_id, int timestamp)
 {
    PrivateDataSet* pDataSet;
     //find multidataset
@@ -233,7 +233,9 @@ void HDF5mpipp::createDatasets()
 
 void HDF5mpipp::distributeDatasets(std::vector<PrivateDataSet> &datasets,std::vector<DataSet> &global_datasets, std::vector<int> &shift, std::vector<int> &global_number, std::vector<int> &private_ptr_datasets)
 {
+  #ifdef _DEBUG_MODE
   std::cout << "distributeDatasets" << std::endl;
+  #endif
   //
   // Gather number of datasets
   //
@@ -324,7 +326,9 @@ void HDF5mpipp::distributeDatasets(std::vector<PrivateDataSet> &datasets,std::ve
 	private_ptr_datasets[j] = i;
 	//datasets[i] = datasets_copy[j];
       }
+    #ifdef _DEBUG_MODE
     std::cout << "id=" <<  global_datasets[i].id << " size=" << global_datasets[i].size << " name=" << global_datasets[i].name << " isPrivateDataset=" << isPrivateDataset<< std::endl;
+    #endif
     datasets.at(i).head = global_datasets[i];
     registerHDF5DataSet(datasets.at(i), isPrivateDataset);
   }
@@ -369,8 +373,9 @@ void HDF5mpipp::registerHDF5DataSet(PrivateDataSet &dataset, bool isPrivateDatas
   
   
   /* Create attributes */
-  
+  #ifdef _DEBUG_MODE
   std::cout << "Create attributes" << std::endl;
+  #endif
   
   if (dataset.type == 0) {
     hid_t aid1  = H5Screate(H5S_SCALAR);
@@ -432,7 +437,9 @@ void HDF5mpipp::signup_spike(int id, int neuron_id, int expectedsize, int buf)
   ownDataSet.type = 0;
   strcpy(ownDataSet.head.name, datasetname_ss.str().c_str());
   
+  #ifdef _DEBUG_MODE
   std::cout << "signup_spike:" << datasetname_ss.str() << std::endl;
+  #endif
   
   spike_datasets.push_back(ownDataSet);
 }
@@ -449,8 +456,9 @@ void HDF5mpipp::signup_multi(int id, int neuron_id, int size, int buf)
   ownDataSet.head.numberOfValues = buf;
   ownDataSet.type = 1;
   strcpy(ownDataSet.head.name, datasetname_ss.str().c_str());
-  
+  #ifdef _DEBUG_MODE
   std::cout << "signup_multi:" << datasetname_ss.str() << std::endl;
+  #endif
   
   multi_datasets.push_back(ownDataSet);
 }

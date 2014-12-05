@@ -30,11 +30,13 @@ public:
   logger(logger),
   isSinup(false)
   {
+    #ifdef _DEBUG_MODE
     std::cout << "Signup multi" << std::endl;
     std::cout << "configuration:" << std::endl;
     std::cout << "\tmultimeter_id=" <<multimeter_id << std::endl;
     std::cout << "\tsamlpingInterval=" << samlpingInterval<< std::endl;
     std::cout << "\tnumberOfValues=" << numberOfValues<< std::endl;
+    #endif
     //logger->signup_multi(multimeter_id, (T-dt)/samlpingInterval, 1);
     //logger->signup_multi(this, 1);
     values = new double[numberOfValues];
@@ -53,11 +55,13 @@ public:
   
   void connect2Neuron(int id)
   {
+    #ifdef _DEBUG_MODE
     std::cout << "connect2Neuron" << std::endl;
+    #endif
     if (!isSinup)
       neuron_ids.push_back(id);
     else
-      std::cout << "Multimeter error: multimeter has already signed up" << std::endl;
+      std::cerr << "Multimeter error: multimeter has already signed up" << std::endl;
   }
   
   void singup()
@@ -75,7 +79,10 @@ public:
       lastRecordT+=samlpingInterval;
       //std::cout << "record_multi" << std::endl;
       values[0]+=0.3;
-      logger->record_multi(multimeter_id, timestamp, values);
+      for (int n=0; n<neuron_ids.size(); n++) {
+	values[0]+=0.01;
+	logger->record_multi(this, neuron_ids.at(n), timestamp, values);
+      }
      
     }
   }

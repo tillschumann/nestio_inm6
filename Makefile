@@ -21,14 +21,14 @@ SERSIONCFLAGS = `~/sionlib/install/sionlib_linux_gomp/bin/sionconfig --cflags --
 all: hdf5mpipp \
  
 
-hdf5mpipp: sionlib_logger.o NESTProxy.o nestio_func.o abstract_logger.o hdf5mpipp.o AsciiLogger.o SpikeDetector.o Multimeter.o runNESTProxy.o seriestimer.o stopwatch.o scopetimer.o
-	$(CC) $(CFLAGS) -o runNESTProxy runNESTProxy.o abstract_logger.o nestio_func.o hdf5mpipp.o NESTProxy.o sionlib_logger.o AsciiLogger.o SpikeDetector.o Multimeter.o seriestimer.o stopwatch.o scopetimer.o $(INCLUDE) $(LIBSHDF) $(MPISIONLIB) $(LIB)
+hdf5mpipp: sionlib_logger.o NESTProxy.o nestio_func.o abstract_logger.o hdf5mpipp.o AsciiLogger.o Multimeter.o SpikeDetector.o runNESTProxy.o seriestimer.o stopwatch.o scopetimer.o
+	$(CC) $(CFLAGS) -o runNESTProxy runNESTProxy.o abstract_logger.o nestio_func.o hdf5mpipp.o NESTProxy.o sionlib_logger.o AsciiLogger.o Multimeter.o SpikeDetector.o seriestimer.o stopwatch.o scopetimer.o $(INCLUDE) $(LIBSHDF) $(MPISIONLIB) $(LIB)
 	
 runNESTProxy.o: runNESTProxy.cpp
 	$(CC) $(CFLAGS) $(MPISIONCFLAGS) -c runNESTProxy.cpp $(INCLUDE)
 	
 abstract_logger.o: abstract_logger.cpp abstract_logger.h
-	$(CC) $(CFLAGS) -fPIC -c abstract_logger.cpp $(INCLUDE)
+	$(CC) $(CFLAGS) -c abstract_logger.cpp $(INCLUDE)
 	
 nestio_func.o: nestio_func.cpp
 	$(CC) $(CFLAGS) -fPIC -c nestio_func.cpp $(INCLUDE)

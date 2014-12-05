@@ -29,9 +29,11 @@ public:
   logger(logger),
   isSinup(false)
   {
+    #ifdef _DEBUG_MODE
     std::cout << "Signup SpikeDetector" << std::endl;
     std::cout << "configuration:" << std::endl;
     std::cout << "\tneuron_id=" << spikedetector_id << std::endl;
+    #endif
     //std::cout << "\tspikes_mean=" << spikes_dist.mean<< std::endl;
     //logger->signup_spike(neuron_id, 1000, 1);
     //logger->signup_spike(this,1000);
@@ -43,7 +45,7 @@ public:
 	spikes_dists.push_back(dist);
       }
       else {
-	std::cout << "SpikeDetector error: spikedetector has already signed up" << std::endl;
+	std::cerr << "SpikeDetector error: spikedetector has already signed up" << std::endl;
       }
   }
   
@@ -60,8 +62,10 @@ public:
 	//std::cout << "update SpikeDetector " << neuron_ids.at(n) << std::endl;
 	int spikes = (int)spikes_dists.at(n)->getValue();
 	for (int i=0; i<spikes; i++) {
-	    //std::cout << "record_spike" << std::endl;
-	    logger->record_spike(neuron_ids.at(n), timestamp);
+	  #ifdef _DEBUG_MODE
+	    std::cout << "record_spike" << std::endl;
+	  #endif
+	    logger->record_spike(this, neuron_ids.at(n), timestamp);
 	}
       }
   }

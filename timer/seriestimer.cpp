@@ -185,7 +185,6 @@ void nest::SeriesTimer::print_all_csv(const char* msg, Stopwatch::timeunit_t tim
 #ifdef ENABLE_TIMING
     assert(Stopwatch::correct_timeunit(timeunit));
     os << msg;
-    std::cout << msg << " size:" << _timestamps.size() << std::endl;
     for (int i = 0; i < _timestamps.size(); ++i)
     {
         os << ";" << _timestamps[i];

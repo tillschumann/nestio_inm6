@@ -24,34 +24,9 @@
 #define NESTPROXY_CLASS
 
 
-#define TWO_PI 6.2831853071795864769252866
- 
-/*double generateGaussianNoise(const double &variance)
-{
-	static bool hasSpare = false;
-	static double rand1, rand2;
- 
-	if(hasSpare)
-	{
-		hasSpare = false;
-		return sqrt(variance * rand1) * sin(rand2);
-	}
- 
-	hasSpare = true;
- 
-	rand1 = rand() / ((double) RAND_MAX);
-	if(rand1 < 1e-100) rand1 = 1e-100;
-	rand1 = -2 * log(rand1);
-	rand2 = (rand() / ((double) RAND_MAX)) * TWO_PI;
- 
-	return sqrt(variance * rand1) * cos(rand2);
-}*/
-
-//template < typename L >
 class NESTProxy
 {
 	private:
-		//L &logger;
 		ILogger &logger;
 		nest::SeriesTimer* writetimer;
 		nest::SeriesTimer* synctimer;
@@ -85,12 +60,6 @@ class NESTProxy
 		  delivertimer[omp_get_thread_num()].stop();
 		}
 
-		/*void write(double& t)
-		{
-			int neuron_id=0;
-			logger.single_write(t, data, neuron_id);
-		}*/
-
 		void sync(double& t)
 		{
 			logger.updateDatasetSizes(t);
@@ -112,7 +81,9 @@ class NESTProxy
 		sleeptimer(sleeptimer),
 		synctimer(synctimer)
 		{
+			#ifdef _DEBUG_MODE
 			std::cout << "Init NESTProxy" << std::endl;
+			#endif
 			//set dataset name
 			//only one dataset per node possible with hdf5
 			int rank;
@@ -122,11 +93,13 @@ class NESTProxy
 			//init rand
 			sleep(rank);
 			srand(time(NULL));
+			#ifdef _DEBUG_MODE
 			std::cout << "print config" << std::endl;
 			std::cout << "\tTstop="<< simSettings.T<< std::endl;
 			std::cout << "\tTresolution="<< simSettings.Tresolution<< std::endl;
 			std::cout << "configuration:" << std::endl;
 			std::cout << conf << std::endl;
+			#endif
 			
 			
 			
@@ -144,8 +117,8 @@ class NESTProxy
 			    
 			    int thread_num = omp_get_thread_num();
 			    
-			    int nosdpt = conf.numberOfSpikeDetectorsPerThread->getValue();
-			    int nompt = conf.numberOfMultimetersPerThread->getValue();
+			    int nosdpt = conf.numberOfSpikeDetectorsPerThread->getIntValue();
+			    int nompt = conf.numberOfMultimetersPerThread->getIntValue();
 			    
 			    #pragma omp critical 
 			    {
@@ -177,18 +150,26 @@ class NESTProxy
 
 		~NESTProxy()
 		{
+		    #ifdef _DEBUG_MODE
 		    std::cout << "destructor NESTProxy" << std::endl;
+		    #endif
 		    for (int thread_num=0;thread_num<num_threads;thread_num++) {
 		      for (int i=0;i<spikeDetectors[thread_num].size();i++) {
+			  #ifdef _DEBUG_MODE
 			  std::cout << "delete spikedetector " << i << std::endl;
+			  #endif
 			  delete spikeDetectors[thread_num].at(i);
 		      }
 		      for (int i=0;i<multimeters[thread_num].size();i++) {
+			  #ifdef _DEBUG_MODE
 			  std::cout << "delete multimeter " << i << std::endl;
+			  #endif
 			  delete multimeters[thread_num].at(i);
 		      }
 		    }
+		    #ifdef _DEBUG_MODE
 		    std::cout << "delete complete" << std::endl;
+		    #endif
 		}
 		
 		
@@ -200,9 +181,11 @@ class NESTProxy
 		 */
 		void run()
 		{
+			#ifdef _DEBUG_MODE
 			std::cout << "NEST PROXY RUN" << std::endl;
 			std::cout << "Parameters:" << std::endl;
 			std::cout << "RAND_MAX=" << RAND_MAX << std::endl;
+			#endif
 			//std::cout << "thread_num=" << thread_num << std::endl;
 			double t=0;
 			int timestamp=0;
@@ -220,7 +203,9 @@ class NESTProxy
 			  conf.deadTimeDeliver->init();
 			
 			  while (t<=simSettings.T) {
+				#ifdef _DEBUG_MODE
 				std::cout << "Iteration: t="<< t << " timestamp=" << timestamp << std::endl;
+				#endif
 				// DELIVER
 				//#pragma omp single
 				  int thread_num = omp_get_thread_num();
@@ -268,8 +253,9 @@ class NESTProxy
 				t+=simSettings.Tresolution;
 				timestamp++;
 				}
-			
+			#ifdef _DEBUG_MODE
 			std::cout << "Iterations done" << std::endl;
+			#endif
 		  }
 		}
 };

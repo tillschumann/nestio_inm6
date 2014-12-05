@@ -63,6 +63,9 @@ std::ostream& nestio::operator << (std::ostream &o, const nestio::Loggers &l)
       break;
     case nestio::HDF5:
       o << "HDF5";
-      break;     
+      break;
+    case nestio::ASCII:
+      o << "ASCII";
+      break; 
   }
 }

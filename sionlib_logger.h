@@ -2,9 +2,9 @@
 #include <omp.h>
 #include <sion.h>
 #include <vector>
-#include "abstract_logger.h"
 #include "Multimeter.h"
 #include "SpikeDetector.h"
+#include "abstract_logger.h"
 
 #ifndef SIONLIBLOGGER_CLASS
 #define SIONLIBLOGGER_CLASS
@@ -12,7 +12,7 @@
 struct SionFileHeaderNode
 {
   int id;
-  int owner_id;
+  int neuron_id;
   int type;   //0:int 1:double
   int numberOfValues;
   double interval;
@@ -142,7 +142,7 @@ class Sionlib_logger : public ILogger
 		
 	public:
 		Sionlib_logger() {};
-		Sionlib_logger(std::string, int, nestio::SionLoggerType, nestio::SimSettings&);
+		Sionlib_logger(std::string,std::string, int, nestio::SionLoggerType, nestio::SimSettings&);
 		~Sionlib_logger();
 		//int newDataSet(const std::string, const int, const int);
 		void setSize(int,int);
@@ -151,17 +151,17 @@ class Sionlib_logger : public ILogger
 		//void single_write(double& t, int& v, const int ptr);
 		//void single_write(double& t, double& v, const int ptr);
 		
-		void record_spike(int neuron_id, double t);
-		void record_multi(int multimeter_id, int timestamp, double* v);
+		void record_spike(SpikeDetector* spike, int neuron_id, int timestamp);
+		void record_multi(Multimeter* multi, int neuron_id, int timestamp, double* v);
 		
-		void srecord_spike(int neuron_id, double t);
-		void srecord_multi(int multimeter_id, int timestamp, double* v);
+		void srecord_spike(int spikedetector_id, int neuron_id, int timestamp);
+		void srecord_multi(Multimeter* multi, int neuron_id, int timestamp, double* v);
 		
-		void brecord_spike(int neuron_id, double t);
-		void brecord_multi(int neuron_id, int timestamp, double* v);
+		void brecord_spike(int spikedetector_id, int neuron_id, int timestamp);
+		void brecord_multi(Multimeter* multi, int neuron_id, int timestamp, double* v);
 		
-		void crecord_spike(int neuron_id, double t);
-		void crecord_multi(int neuron_id, int timestamp, double* v);
+		void crecord_spike(int spikedetector_id, int neuron_id, int timestamp);
+		void crecord_multi(Multimeter* multi, int neuron_id, int timestamp, double* v);
 		
 		void signup_spike(SpikeDetector* spike, int neuron_id, int buf);
 		void signup_multi(Multimeter* multi, int neuron_id, int buf);
