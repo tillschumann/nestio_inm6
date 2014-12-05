@@ -10,7 +10,6 @@ run Proxy:
   
 The NestProxy writes out data to outputfolder_data and stores the measured timings in the outputfolder_benchfiles folder.
 
-
 run validation tool:
   ./readSionFile data.spike_sion data.multi_sion
   
@@ -20,3 +19,6 @@ run validation tool:
 run visualization tool:
   edit directory variable in Visualization/read.py
   run "python Visualization/read.py"
+  
+  Use the "Load" button in the lower right to load timings and configurations.
+  To select an output folder you have to enter it and press "OK" afterwards.

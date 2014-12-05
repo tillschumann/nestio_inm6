@@ -167,7 +167,7 @@ int main(int argc, char *argv[])
 	#ifdef DEBUG_MODE
 	std::cout << "runNESTProxy" << std::endl;
 	#endif
-	int numberOfThreads=omp_get_max_threads();
+	int numberOfThreads=omp_get_max_threads(); //must not be changed
 	int threadNumber=omp_get_thread_num();
 
 	
@@ -179,7 +179,7 @@ int main(int argc, char *argv[])
 	nestio::Configuration conf;
 	conf.logger = nestio::SIONLIB;
 	conf.bufferSize = 100;
-	conf.numberOfThreads=new nestio::FixIntValue(numberOfThreads);
+	conf.numberOfThreads=new nestio::FixIntValue(numberOfThreads); //must not be changed
 	conf.numberOfSpikeDetectorsPerThread=new nestio::FixIntValue(2);
 	conf.spikesPerDector = new nestio::FixIntValue(1);
 	conf.numberOfMultimetersPerThread= new nestio::FixIntValue(2);
