@@ -236,7 +236,7 @@ void Sionlib_logger::createDatasets()
 /*
  * Init sion file
  */
-Sionlib_logger::Sionlib_logger(std::string sfn, std::string mfn, sion_int64 buf_size, nestio::SionLoggerType loggerType, nestio::SimSettings &simSettings)
+Sionlib_logger::Sionlib_logger(std::string sfn, std::string mfn, sion_int64 buf_size, nestio::LoggerType loggerType, nestio::SimSettings &simSettings)
 :simSettings(simSettings), loggerType(loggerType)
 {
 	//std::cout << "create logger in thread "<< omp_get_thread_num() << std::endl;
@@ -350,11 +350,8 @@ Sionlib_logger::~Sionlib_logger()
 void Sionlib_logger::updateDatasetSizes(const double& t)
 {
   if (loggerType == nestio::Collective) {
-    #ifdef _OPENMP
     const int thread_num = omp_get_thread_num();
-    #else
-    const int thread_num = 0;
-    #endif
+
     if (buffer_spike[thread_num].getSize()>0) {
       sion_fwrite(buffer_spike[thread_num].read(), buffer_spike[thread_num].getSize(), 1, spike_sid[thread_num]);
       buffer_spike[thread_num].clear();

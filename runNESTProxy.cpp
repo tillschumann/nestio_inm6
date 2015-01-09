@@ -3,6 +3,7 @@
 #include "NESTProxy.h"
 
 #include "hdf5mpipp.h"
+#include "ohdf5mpipp.h"
 #include "sionlib_logger.h"
 #include "AsciiLogger.h"
 //#include "abstract_logger.h"
@@ -75,6 +76,18 @@ void run(nestio::Configuration &conf, nestio::SimSettings &simSettings,int argc,
       case nestio::HDF5:
 	fns << output_dir_file.str() << "/data.hdf5";
 	logger = new HDF5mpipp(fns.str(), conf.bufferSize, simSettings);
+	break;
+      case nestio::oHDF5:
+	fns << output_dir_file.str() << "/data_o.hdf5";
+	logger = new OHDF5mpipp(fns.str(), conf.bufferSize, nestio::Standard, simSettings);
+	break;
+      case nestio::oHDF5_BUFFERED:
+	fns << output_dir_file.str() << "/data_o.hdf5";
+	logger = new OHDF5mpipp(fns.str(), conf.bufferSize, nestio::Buffered, simSettings);
+	break;
+      case nestio::oHDF5_COLLECTIVE:
+	fns << output_dir_file.str() << "/data_o.hdf5";
+	logger = new OHDF5mpipp(fns.str(), conf.bufferSize, nestio::Collective, simSettings);
 	break;
       case nestio::ASCII:
 	sfn << output_dir_file.str() << "/data.spike_ascii";
@@ -177,12 +190,12 @@ int main(int argc, char *argv[])
 	simSettings.Tresolution=0.1;
 	
 	nestio::Configuration conf;
-	conf.logger = nestio::SIONLIB;
-	conf.bufferSize = 100;
+	conf.logger = nestio::oHDF5_COLLECTIVE;
+	conf.bufferSize = 5000;
 	conf.numberOfThreads=new nestio::FixIntValue(numberOfThreads); //must not be changed
 	conf.numberOfSpikeDetectorsPerThread=new nestio::FixIntValue(2);
-	conf.spikesPerDector = new nestio::FixIntValue(1);
-	conf.numberOfMultimetersPerThread= new nestio::FixIntValue(2);
+	conf.spikesPerDector = new nestio::FixIntValue(100);
+	conf.numberOfMultimetersPerThread= new nestio::FixIntValue(0);
 	conf.samplingIntervalsOfMeter = new nestio::FixDoubleValue(0.05);
 	conf.deadTimeSpikeDetector = new nestio::FixIntValue(35);
 	conf.deadTimeMultimeters = new nestio::FixIntValue(35);

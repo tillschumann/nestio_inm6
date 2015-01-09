@@ -16,6 +16,8 @@ run validation tool:
   optional argument:
     --printanyway: print read data to standart error
     
+  
+    
 run visualization tool:
   edit directory variable in Visualization/read.py
   run "python Visualization/read.py"

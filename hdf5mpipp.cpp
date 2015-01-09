@@ -369,7 +369,7 @@ void HDF5mpipp::registerHDF5DataSet(PrivateDataSet &dataset, bool isPrivateDatas
       creation properties.  */
 
   dataset.dset_id=H5Dcreate2 (file, dataset.head.name, filetype, filespace,
-	    H5P_DEFAULT, prop, H5P_DEFAULT);
+	    H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT); // without chunking
   
   
   /* Create attributes */

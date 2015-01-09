@@ -288,7 +288,8 @@ namespace nestio
     
   };
   
-  enum Loggers {SIONLIB, SIONLIB_BUFFERED, SIONLIB_COLLECTIVE, HDF5, ASCII};
+  enum Loggers {SIONLIB, SIONLIB_BUFFERED, SIONLIB_COLLECTIVE, HDF5, oHDF5, oHDF5_BUFFERED, oHDF5_COLLECTIVE, ASCII};
+  enum LoggerType {Standard, Buffered, Collective};
   
   extern std::ostream& operator << (std::ostream &o, const nestio::Loggers &l);
   

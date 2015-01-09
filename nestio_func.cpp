@@ -64,6 +64,15 @@ std::ostream& nestio::operator << (std::ostream &o, const nestio::Loggers &l)
     case nestio::HDF5:
       o << "HDF5";
       break;
+    case nestio::oHDF5:
+      o << "oHDF5";
+      break;
+    case nestio::oHDF5_BUFFERED:
+      o << "oHDF5_BUFFERED";
+      break;
+    case nestio::oHDF5_COLLECTIVE:
+      o << "oHDF5_COLLECTIVE";
+      break;
     case nestio::ASCII:
       o << "ASCII";
       break; 
