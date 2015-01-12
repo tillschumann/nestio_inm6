@@ -390,7 +390,7 @@ void OHDF5mpipp::registerHDF5DataSet(HDF5DataSet& dataset, char* name)
       creation properties.  */
 
   dataset.dset_id=H5Dcreate2 (file, name, filetype, dataset.filespace,
-	    H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	    H5P_DEFAULT, prop, H5P_DEFAULT);
   
   status = H5Tclose(filetype);
   //status = H5Sclose (filespace);

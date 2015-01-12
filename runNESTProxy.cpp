@@ -30,12 +30,12 @@ void run(nestio::Configuration &conf, nestio::SimSettings &simSettings,int argc,
     std::stringstream output_dir_file;
     std::stringstream output_dir_log;
     if (argc > 2) {
-      output_dir_file << "nestproxyoutput_" << argv[1];
-      output_dir_log << "nestproxyoutput_" << argv[2];
+      output_dir_file << argv[1];
+      output_dir_log << argv[2];
     }
     else if (argc >1) {
-      output_dir_file << "nestproxyoutput_" << argv[1];
-      output_dir_log << "nestproxyoutput_" << argv[1];
+      output_dir_file << argv[1];
+      output_dir_log << argv[1];
     }
     else {
       //output_dir_file << "nestproxyoutput";
