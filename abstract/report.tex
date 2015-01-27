@@ -1,0 +1,54 @@
+\documentclass{article}
+ 
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subfigure}
+\usepackage{epstopdf}
+\usepackage[ansinew]{inputenc}
+\usepackage{listings}
+\usepackage{xcolor}
+%\setlength{\oddsidemargin}{0cm}
+%\setlength{\evensidemargin}{0cm}
+%\setlength{\topmargin}{0cm}
+
+\usepackage{a4wide}
+
+\title{Abstract - Development of a proxy for NEST: Simulating the disk writing behavior}
+\author{Till Schumann}
+\date{INM-6}
+
+\begin{document}
+   \maketitle
+
+The Computational and Systems Neuroscience (INM-6) institute has developed over the years a simulator for spiking neural network models called NEST\cite{NEST}.
+NEST simulates the biological activity and interaction of nerve cells. Therefore NEST is a hybrid parallelized application.
+The complexity of the simulations reaches from small networks computed on local machines up to ones using the full workload of the world leading super computers.
+Storing simulation data efficiently during runtime is a big problem on super computers.
+But it is essential for analysis and studies.
+\newline
+
+For storing simulation data measurement devices can be connected virtually to nerve cells.
+These measurement devices store local variables of the nerve cells to disk.
+Depending on the location of the nerve cells the measurement devices are distributed unequally on the computation cluster.
+At the moment each measurement device opens its own file handler via c++ standard output.
+With increasing number of devices the disk writing becomes the bottleneck of the whole simulation.
+In terms of future requirements a new disk writing strategy is necessary.
+Therefore efficient parallel libraries should be used to reduce the writing timings.
+We implemented experimental interfaces for HDF5\cite{hdf2010hierarchical} and Sionlib\cite{frings2009scalable}. 
+An optimization of the library interfaces with NEST is difficult.
+Even a comparison of the performance for our use cases of the libraries is difficult.
+Hence we needed a tool to analyze the writing performance for different interfaces.  
+\newline
+
+We developed a proxy which imitates the writing behavior of NEST and generates benchmarks for statistical analysis of the disk writing timings.
+The proxy is a toolbox for performance analysis of the interfaces.
+Optimization of the library interfaces is possible without computational overhead.
+Thus small modification can be tested directly.
+\newline
+..
+
+\bibliographystyle{plain}
+\bibliography{./report}
+
+\end{document}
