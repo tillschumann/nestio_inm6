@@ -1,0 +1,26 @@
+README - NestProxy
+
+compile Sion outfile validation tool
+  make readSionFile
+  
+run Proxy:
+  edit runNESTProxy.cpp main function for own settings.
+  make
+  mpirun -np $nodes runNESTProxy $outputfolder_data $outputfolder_benchfiles
+  
+The NestProxy writes out data to outputfolder_data and stores the measured timings in the outputfolder_benchfiles folder.
+
+run validation tool:
+  ./readSionFile data.spike_sion data.multi_sion
+  
+  optional argument:
+    --printanyway: print read data to standart error
+    
+  
+    
+run visualization tool:
+  edit directory variable in Visualization/read.py
+  run "python Visualization/read.py"
+  
+  Use the "Load" button in the lower right to load timings and configurations.
+  To select an output folder you have to enter it and press "OK" afterwards.

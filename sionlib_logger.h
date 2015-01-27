@@ -106,11 +106,6 @@ SionBuffer& operator<<(SionBuffer& buffer, const T v)
   buffer.write((const char*)&v, sizeof(T));
 }
 
-namespace nestio
-{
-  enum SionLoggerType {Standard, Buffered, Collective};
-};
-
 class Sionlib_logger : public ILogger
 {
 	private:
@@ -125,11 +120,11 @@ class Sionlib_logger : public ILogger
 		
 		nestio::SimSettings simSettings;
 		
-		nestio::SionLoggerType loggerType;
+		nestio::LoggerType loggerType;
 		
 	public:
 		Sionlib_logger() {};
-		Sionlib_logger(std::string,std::string, sion_int64, nestio::SionLoggerType, nestio::SimSettings&);
+		Sionlib_logger(std::string,std::string, sion_int64, nestio::LoggerType, nestio::SimSettings&);
 		~Sionlib_logger();
 		
 		void createDatasets();
