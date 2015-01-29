@@ -28,7 +28,7 @@ Storing simulation data efficiently during runtime is a big problem on super com
 But it is essential for analysis and studies.
 \newline
 
-For storing simulation data measurement devices can be connected virtually to nerve cells.
+To store internal simulation data measurement devices can be connected virtually to nerve cells.
 These measurement devices store local variables of the nerve cells to disk.
 Depending on the location of the nerve cells the measurement devices are distributed unequally on the computation cluster.
 At the moment each measurement device opens its own file handler via c++ standard output.
@@ -45,10 +45,11 @@ We developed a proxy which imitates the writing behavior of NEST and generates b
 The proxy is a toolbox for performance analysis of the interfaces.
 Optimization of the library interfaces is possible without computational overhead.
 Thus small modification can be tested directly.
-\newline
-..
+We use the proxy to optimize the HDF5 and Sionlib interfaces for NEST.
+The final generated benchmarks enable us to make an informed choice of the best library/interface for NEST.
 
-\bibliographystyle{plain}
+\bibliographystyle{plain}
+
 \bibliography{./report}
 
 \end{document}
