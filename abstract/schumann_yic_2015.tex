@@ -61,52 +61,26 @@
 \keywords{parallel I/O; simulation; neuronal networks; supercomputer;
   threading; MPI}
 
-\abstract{
-  Over the past 20 years, the NEST Initiative
-  (\texttt{http://www.nest-initiative.org/}) has developed the NEST
-  \cite{NEST} simulator for spiking neural network models. It is used
-  in computational neuroscience to simulate the dynamics of the
-  interaction between nerve cells. The systems explored with NEST
-  range from small networks simulated on local machines up to large
-  brain-scale circuits using the full capabilites of the world's
-  leading supercomputers. To have this flexibility, NEST is
-  parallelized in a hybrid fashion using threads on a compute node and
-  MPI to communicate between the compute nodes \cite{Plesser07}.
-  Storing simulation data from such a massively parallel application
-  efficiently during runtime is essential for neuroscientic studies,
-  but not a trivial task on a supercomputer with centralized storage.
+\abstract{NEST \cite{NEST} is a simulator for spiking neural
+  networks. It runs on all systems from local machines to
+  supercomputers \cite{Plesser07}. Storing simulation data efficiently
+  is essential for neuroscientific studies, but not trivial on
+  supercomputers with centralized storage.
 
-  To obtain measurements from a simulation in NEST, virtual devices
-  can be connected to simulated nerve cells. These devices store
-  values associated with neurons by writing time to variables mappings
-  such as spiking activity or membrane voltage of nerve cells to
-  disk. Currently, each measurement device opens its own file using
-  plain C++ streams.  With an increasing number of devices and compute
-  nodes, writing data to disk in this way becomes the bottleneck for
-  the whole simulation. Due to the constant growth in simulation sizes
-  and therefore compute nodes, a new writing strategy has become
-  necessary.
+  Virtual devices store neuronal properties such as spiking activity
+  or membrane voltages to disk. With increasing numbers of devices and
+  compute nodes, writing becomes a bottleneck and new I/O strategies
+  are required.
 
-  One solution to the problem is the use of efficient parallel I/O
-  libraries. It is however not clear which of the available libraries
-  is best. In order to assess the characteristics of different
-  libraries, we have implemented a \emph{proxy} which imitates the
-  writing behavior of NEST based on a small set of parameters such as
-  the number of nerve cells to record from, the number of threads and
-  processes, or the rate at which data is recorded.
+  To assess different I/O strategies and libraries, we implemented a
+  \emph{proxy}, which imitates the writing behavior of NEST based on a
+  few parameters (e.g. number of nerve cells recorded, number of
+  threads, recording or spike rate).
 
-  This technique has allowed us to run benchmarks and carry out
-  statistical analysis of the disk writing timings and optimizations
-  of the interfaces without the computational costs and complexity of
-  running a full NEST simulation, allowing a larger number of
-  measurements for a larger number of parameter variations in less
-  time. Currently, the proxy includes experimental interfaces for
-  plain text, HDF5 \cite{hdf2010hierarchical} and SIONlib
-  \cite{frings2009scalable} which are parametrized with data from
-  profiling runs of real NEST simulations. The results of the
-  benchmarks will guide our choice towards a new I/O sub-system for
-  NEST.
-}
+  The proxy allows benchmarking and statistical analysis and
+  consecutively optimizations without the complexity of running full
+  NEST simulations. The results of the benchmarks will guide our way
+  towards a new I/O sub-system for NEST.}
 
 \begin{document}
 
