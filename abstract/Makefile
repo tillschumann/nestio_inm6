@@ -1,10 +1,9 @@
 # Makefile for latex documents
 
-MFILE=report
+MFILE=schumann_yic_2015.tex
 
 all:
 	pdflatex $(MFILE)
-	bibtex $(MFILE)
 	pdflatex $(MFILE)
 	pdflatex $(MFILE)
 
