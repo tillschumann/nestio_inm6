@@ -62,23 +62,23 @@
   threading; MPI}
 
 \abstract{NEST \cite{NEST} is a simulator for spiking neural
-  networks. It runs on all systems from local machines to
+  networks. It runs on local machines, small clusters and
   supercomputers \cite{Plesser07}. Storing simulation data efficiently
-  is essential for neuroscientific studies, but not trivial on
+  is essential for neuroscientific studies but is not trivial on
   supercomputers with centralized storage.
 
   Virtual devices store neuronal properties such as spiking activity
-  or membrane voltages to disk. With increasing numbers of devices and
-  compute nodes, writing becomes a bottleneck and new I/O strategies
-  are required.
+  and membrane voltage to disk. With increasing numbers of devices and
+  compute nodes, writing becomes the major bottleneck, thus requiring
+  new I/O strategies.
 
-  To assess different I/O strategies and libraries, we implemented a
-  \emph{proxy}, which imitates the writing behavior of NEST based on a
+  To assess different I/O strategies and libraries, we have implemented a
+  \emph{proxy} which imitates the writing behavior of NEST based on a
   few parameters (e.g. number of nerve cells recorded, number of
-  threads, recording or spike rate).
+  threads, recording rate and spike rate).
 
-  The proxy allows benchmarking and statistical analysis and
-  consecutively optimizations without the complexity of running full
+  This proxy allows benchmarking and statistical analysis, and
+  thus consequent optimizations, without the complexity of running full
   NEST simulations. The results of the benchmarks will guide our way
   towards a new I/O sub-system for NEST.}
 
