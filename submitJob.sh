@@ -38,7 +38,9 @@
 ### source openmpi
 . /usr/local/mpi/openmpi/1.4.3/gcc64/bin/mpivars_openmpi-1.4.3_gcc64.sh
 
-export LD_LIBRARY_PATH="/users/schumann/hdf5-1.8.12/hdf5/lib:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH="/users/schumann/usr/szip-2.1/lib:$LD_LIBRARY_PATH"
+#export LD_LIBRARY_PATH="/users/schumann/phdf5-1.8.14/lib:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH="/users/schumann/usr/hdf5-1.8.14_mpi_trace/lib:$LD_LIBRARY_PATH"
 export PATH="/users/schumann/Scalasca-2.1/bin:$PATH"
 
 ##########################################
@@ -78,7 +80,7 @@ export OMP_NUM_THREADS=1
 
 ### execute script
 #CMP="scalasca -analyze -e ${PBS_JOBID}_${MPI_NODE_COUNT}_${OMP_NUM_THREADS} mpirun -np ${MPI_NODE_COUNT} ./runNESTProxy"
-CMP="mpirun -np ${MPI_NODE_COUNT} ./runNESTProxy nestproxyoutput_${PBS_JOBID}_${MPI_NODE_COUNT}x${OMP_NUM_THREADS}"
+CMP="mpirun -np ${MPI_NODE_COUNT} ./runNESTProxy /scratch/schumann/${PBS_JOBID} nestproxyoutput_${PBS_JOBID}_${MPI_NODE_COUNT}x${OMP_NUM_THREADS}"
 #CMP="mpirun -np 2 ./test_sionlib"
 
 echo "$CMP"

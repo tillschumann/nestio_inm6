@@ -22,12 +22,13 @@ OHDF5mpipp::OHDF5mpipp(std::string filename, int buf_size, nestio::LoggerType lo
 	
 	int num_threads=omp_get_max_threads();
 	if (logger_type == nestio::Buffered || logger_type == nestio::Collective) {
-	  buffer_multi = new oHDF5Buffer[num_threads];
-	  buffer_spike = new oHDF5Buffer[num_threads];
-	  for (int i=0; i<num_threads;i++) {
-	    buffer_multi[i].extend(buf_size);
-	    buffer_spike[i].extend(buf_size);
-	  }
+	  
+	  buffer_multi = new oHDF5Buffer;
+	  buffer_spike = new oHDF5Buffer;
+	  //for (int i=0; i<num_threads;i++) {
+	  buffer_multi->extend(buf_size*num_threads);
+	  buffer_spike->extend(buf_size*num_threads);
+	  //}
 	}
 	
 	H5Pclose(fapl_id);
@@ -70,7 +71,7 @@ void OHDF5mpipp::setBufferSize(int s)
 	buf_size = s;
 }
 
-int OHDF5mpipp::predictNewSpikeWindowSize(const double& t, HDF5DataSet &dataset)
+int OHDF5mpipp::predictNewSpikeWindowSize(const double& t, HDF5DataSet &dataset) //missing: consider buffer!
 {
   if (t>0) {
     int all_new_entries = (int)((double)dataset.entries / (t / (simSettings.T-t)));
@@ -81,7 +82,7 @@ int OHDF5mpipp::predictNewSpikeWindowSize(const double& t, HDF5DataSet &dataset)
       return 0;
   }
   else
-    return 50*spike_datasets.size();
+    return 200*spike_datasets.size();
 }
 
 /**
@@ -92,11 +93,15 @@ void OHDF5mpipp::updateDatasetSizes(const double& t)
   updateSpikeDataSets(t);
   
   if (logger_type == nestio::Collective) {
-    const int thread_num = omp_get_thread_num();
-
-    if (buffer_spike[thread_num].getSize()>0) {
-      storeContinuousAnalogSignal(spike_dataset, buffer_spike[thread_num].read(), buffer_spike[thread_num].getSize()/spike_dataset.sizeof_entry);
-      buffer_spike[thread_num].clear();
+    //const int thread_num = omp_get_thread_num();
+    #pragma omp single
+    {
+      buffer_spike->lock();
+      if (buffer_spike->getSize()>0) {
+	storeContinuousAnalogSignal(spike_dataset, buffer_spike->read(), buffer_spike->getSize()/spike_dataset.sizeof_entry);
+	buffer_spike->clear();
+      }
+      buffer_spike->unlock();
     }
   }
 }
@@ -146,9 +151,9 @@ void OHDF5mpipp::updateSpikeDataSets(const double& t)
       status = H5Sclose (spike_dataset.filespace);
       spike_dataset.filespace = H5Dget_space (spike_dataset.dset_id);
       spike_dataset.extended2next=true;
-      #ifdef _DEBUG_MODE
+      //#ifdef _DEBUG_MODE
       std::cout << "H5Dset_extent:" << spike_dataset.all_window_size << std::endl;
-      #endif
+      //#endif
     }
   }
     
@@ -187,15 +192,17 @@ void OHDF5mpipp::brecord_spike(SpikeDetector* spike, int neuron_id, int timestam
   std::cout << "brecording: \t" << spike->spikedetector_id << "\t" << neuron_id << "\t" << timestamp << std::endl;
   #endif
   
-  const int thread_num = omp_get_thread_num();
+  //const int thread_num = omp_get_thread_num();
   
-  if (!buffer_spike[thread_num].isEnoughFreeSpace(spike_dataset.sizeof_entry))
+  buffer_spike->lock();
+  if (!buffer_spike->isEnoughFreeSpace(spike_dataset.sizeof_entry))
   {
-    storeContinuousAnalogSignal(spike_dataset, buffer_spike[thread_num].read(), buffer_spike[thread_num].getSize()/spike_dataset.sizeof_entry);
-    buffer_spike[thread_num].clear();
+    storeContinuousAnalogSignal(spike_dataset, buffer_spike->read(), buffer_spike->getSize()/spike_dataset.sizeof_entry);
+    buffer_spike->clear();
   }
   int spikedetector_id = spike->spikedetector_id;
-  buffer_spike[thread_num] << spikedetector_id << neuron_id << timestamp;
+  *buffer_spike << spikedetector_id << neuron_id << timestamp;
+  buffer_spike->unlock();
 }
 
 void OHDF5mpipp::crecord_spike(SpikeDetector* spike, int neuron_id, int timestamp)
@@ -204,11 +211,13 @@ void OHDF5mpipp::crecord_spike(SpikeDetector* spike, int neuron_id, int timestam
   std::cout << "crecording: \t" << spike->spikedetector_id << "\t" << neuron_id << "\t" << timestamp << std::endl;
   #endif
   
-  const int thread_num = omp_get_thread_num();
+  //const int thread_num = omp_get_thread_num();
  
-  buffer_spike[thread_num].getEnoughFreeSpace(spike_dataset.sizeof_entry);
+  buffer_spike->lock();
+  buffer_spike->getEnoughFreeSpace(spike_dataset.sizeof_entry);
   int spikedetector_id = spike->spikedetector_id;
-  buffer_spike[thread_num] << spikedetector_id << neuron_id << timestamp;
+  *buffer_spike << spikedetector_id << neuron_id << timestamp;
+  buffer_spike->unlock();
 }
 
 void OHDF5mpipp::storeContinuousAnalogSignal(HDF5DataSet &dataset, char* values, int n)
@@ -227,7 +236,7 @@ void OHDF5mpipp::storeContinuousAnalogSignal(HDF5DataSet &dataset, char* values,
       	else
       	  dataset.nodeoffset+=dataset.all_window_size;
       }
-      std::cout << "n=" << n << std::endl;
+      //std::cout << "n=" << n << std::endl;
       //std::cout << "dataset.nodeoffset=" << dataset.nodeoffset << std::endl;
       //std::cout << "dataset.window_entries=" << dataset.window_entries << std::endl;
       //std::cout << "dataset.window_size=" << dataset.window_size << std::endl;
@@ -349,11 +358,14 @@ void OHDF5mpipp::registerHDF5DataSet(HDF5DataSet& dataset, char* name)
   //hsize_t dimsext[2] = {1,1}; 
   //dataset.memspace = H5Screate_simple (RANK, dimsext, NULL);
   
-  int chunk_size = 2*buf_size/dataset.sizeof_entry;
+  int chunk_size = buf_size/dataset.sizeof_entry;
+  
+  std::cout << "chunk_size=" << chunk_size << std::endl;
+  std::cout << "dataset.all_window_size=" << dataset.all_window_size << std::endl;
   
   hsize_t maxdims[2]={H5S_UNLIMITED,1};
   hsize_t dims[2]={dataset.all_window_size, 1};
-  hsize_t chunk_dims[2]={chunk_size,1};			//numberOfValues is to small
+  hsize_t chunk_dims[2]={5*chunk_size,1};			//numberOfValues is to small
   /* Create the data space with unlimited dimensions. */
   
   dataset.plist_id = H5Pcreate(H5P_DATASET_XFER);
@@ -390,7 +402,7 @@ void OHDF5mpipp::registerHDF5DataSet(HDF5DataSet& dataset, char* name)
       creation properties.  */
 
   dataset.dset_id=H5Dcreate2 (file, name, filetype, dataset.filespace,
-	    H5P_DEFAULT, prop, H5P_DEFAULT);
+	    H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
   
   status = H5Tclose(filetype);
   //status = H5Sclose (filespace);

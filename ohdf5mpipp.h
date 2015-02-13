@@ -51,19 +51,24 @@ struct oPrivateDataSet {
 class oHDF5Buffer
 {
 private:
+  omp_lock_t *o_lock;
   int ptr;
   int max_size;
   char* buffer;
 public:
   oHDF5Buffer(): buffer(NULL), ptr(0)
-  {}
+  {
+    omp_init_lock(o_lock);
+  }
   oHDF5Buffer(int size): ptr(0)
   {
+    omp_init_lock(o_lock);
     buffer = new char[size];
     max_size=size;
   }
   ~oHDF5Buffer()
   {
+    omp_destroy_lock(o_lock);
     delete buffer;
   }
   void extend(int size)
@@ -80,6 +85,7 @@ public:
   }
   void write(const char* v, long unsigned int n)
   {
+    //std::cout << "n=" << n << " max_size=" << max_size << " ptr=" << ptr << std::endl;
     if (ptr+n<=max_size) {
       memcpy(buffer+ptr,v,n);
       ptr+=n;
@@ -112,6 +118,14 @@ public:
     ptr=0;
   }
   
+  void lock() {
+    omp_set_lock(o_lock);
+  }
+  void unlock() {
+    omp_unset_lock(o_lock);
+  }
+  
+  
    char* read()
    {
      return buffer;
@@ -121,7 +135,10 @@ public:
 template < typename T >
 oHDF5Buffer& operator<<(oHDF5Buffer& buffer, const T v)
 {
-  buffer.write((const char*)&v, sizeof(T));
+  //#pragma omp critical
+  //{
+    buffer.write((const char*)&v, sizeof(T));
+  //}
 }
 
 class OHDF5mpipp : public ILogger
@@ -142,8 +159,8 @@ class OHDF5mpipp : public ILogger
 		
 		
 		nestio::LoggerType logger_type;
-		oHDF5Buffer *buffer_multi;
-		oHDF5Buffer *buffer_spike;
+		oHDF5Buffer* buffer_multi;
+		oHDF5Buffer* buffer_spike;
 		
 		
 		nestio::SimSettings simSettings;

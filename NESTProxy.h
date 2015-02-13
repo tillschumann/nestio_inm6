@@ -117,6 +117,8 @@ class NESTProxy
 			    
 			    int thread_num = omp_get_thread_num();
 			    
+			    //get values from sd and mm list
+			    
 			    int nosdpt = conf.numberOfSpikeDetectorsPerThread->getIntValue();
 			    int nompt = conf.numberOfMultimetersPerThread->getIntValue();
 			    

@@ -293,9 +293,21 @@ namespace nestio
   
   extern std::ostream& operator << (std::ostream &o, const nestio::Loggers &l);
   
+  struct Multimeter_Config {
+    IDistribution *numberOfValuesWritten;
+    IDistribution *samplingIntervals;
+    IDistribution *deadTime;
+  };
+  
+  struct Spikedetector_Config {
+    IDistribution *spikesPerDector;
+  };
+  
   struct Configuration {
     Loggers logger;
     int bufferSize;
+    std::vector<Multimeter_Config> multimeter_configs;
+    std::vector<Spikedetector_Config> spikedetector_configs;
     IDistribution *numberOfThreads;
     IDistribution *numberOfProcesses;
     IDistribution *numberOfSpikeDetectorsPerThread;

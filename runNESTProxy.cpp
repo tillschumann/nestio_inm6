@@ -190,8 +190,8 @@ int main(int argc, char *argv[])
 	simSettings.Tresolution=0.1;
 	
 	nestio::Configuration conf;
-	conf.logger = nestio::oHDF5_COLLECTIVE;
-	conf.bufferSize = 5000;
+	conf.logger = nestio::SIONLIB_BUFFERED;
+	conf.bufferSize = 2400;
 	conf.numberOfThreads=new nestio::FixIntValue(numberOfThreads); //must not be changed
 	conf.numberOfSpikeDetectorsPerThread=new nestio::FixIntValue(2);
 	conf.spikesPerDector = new nestio::FixIntValue(100);
