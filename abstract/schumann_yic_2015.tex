@@ -1,0 +1,126 @@
+%--------------------------------------------------------------------------------
+\documentclass[]{AbstractYIC2015}
+
+% --------------------------------------------------------------------------------
+% Please do not use any extra latex packages
+%--------------------------------------------------------------------------------
+\usepackage{graphicx}
+\usepackage{tabularx}
+
+
+% --------------------------------------------------------------------------------
+% Abstract's title, with capital letter only at the beginning
+%--------------------------------------------------------------------------------
+\title{Modeling the I/O behavior of the NEST simulator using a proxy}
+
+% -------------------------------------------------------------------------------
+% List of authors
+% --------------------------------------------------------------------------------
+% Put the initials and surname of the first author ('et al.' if applicable) in
+% square brackets before the command \author
+%
+% Identify the corresponding author with the command \corref and each author
+% with the command \authref{a,b,...} according to the affiliation
+%
+\author[T. Schumann et al.]{%
+  T. Schumann\authref{a}\corref,
+  W. Frings\authref{b},
+  A. Peyser\authref{c},
+  W. Schenck\authref{c},
+  K. Thust\authref{b},
+  J.M. Eppler\authref{c}
+}
+
+% --------------------------------------------------------------------------------
+% Affiliations
+% --------------------------------------------------------------------------------
+\address{\authaddr{a}{Institute of Neuroscience and Medicine (INM-6), Computational and Systems Neuroscience \\ %
+    Institute for Advanced Simulation (IAS-6) \\ %
+    J\"ulich Aachen Research Alliance \\ %
+    Forschungszentrum J\"ulich GmbH \\ %
+    52425 J\"ulich, Germany}
+  \authaddr{b}{J\"ulich Supercomputing Centre \\ %
+    Institute for Advanced Simulation \\ %
+    Forschungszentrum J\"ulich GmbH\\ %
+    52425 J\"ulich, Germany}
+  \authaddr{c}{Simulation Lab Neuroscience - Bernstein Facility for Simulation and Database Technology \\ %
+    Institute for Advanced Simulation \\ %
+    J\"ulich Aachen Research Alliance \\ %
+    Forschungszentrum J\"ulich GmbH \\ %
+    52425 J\"ulich, Germany}
+}
+%
+% --------------------------------------------------------------------------------
+% Email address of the corresponding author
+% --------------------------------------------------------------------------------
+\corauth{till.schumann@rwth-aachen.de}
+
+% --------------------------------------------------------------------------------
+% Keywords
+% --------------------------------------------------------------------------------
+\keywords{parallel I/O; simulation; neuronal networks; supercomputer;
+  threading; MPI}
+
+\abstract{NEST \cite{NEST} is a simulator for spiking neural
+  networks. It runs on local machines, small clusters and
+  supercomputers \cite{Plesser07}. Storing simulation data efficiently
+  is essential for neuroscientific studies but is not trivial on
+  supercomputers with centralized storage.
+
+  Virtual devices store neuronal properties such as spiking activity
+  and membrane voltage to disk. With increasing numbers of devices and
+  compute nodes, writing becomes the major bottleneck, thus requiring
+  new I/O strategies.
+
+  To assess different I/O strategies and libraries, we have implemented a
+  \emph{proxy} which imitates the writing behavior of NEST based on a
+  few parameters (e.g. number of nerve cells recorded, number of
+  threads, recording rate and spike rate).
+
+  This proxy allows benchmarking and statistical analysis, and
+  thus consequent optimizations, without the complexity of running full
+  NEST simulations. The results of the benchmarks will guide our way
+  towards a new I/O sub-system for NEST.}
+
+\begin{document}
+
+\maketitle
+
+
+
+% --------------------------------------------------------------------------------
+% Bibliography
+% --------------------------------------------------------------------------------
+\begin{thebibliography}{99}
+
+\bibitem{frings2009scalable}
+Wolfgang Frings, Felix Wolf, and Ventsislav Petkov.
+\newblock Scalable massively parallel i/o to task-local files.
+\newblock In {\em High Performance Computing Networking, Storage and Analysis,
+  Proceedings of the Conference on}, pages 1--11. IEEE, 2009.
+
+\bibitem{NEST}
+Marc-Oliver Gewaltig and Markus Diesmann.
+\newblock {NEST} ({NE}ural {S}imulation {T}ool).
+\newblock {\em Scholarpedia}, 2(4):1430, 2007.
+
+\bibitem{hdf2010hierarchical}
+HDF Group 
+\newblock Hierarchical data format version 5, 2000-2010.
+\newblock {\em URL: http://www. hdfgroup. org/HDF5}, 2010.
+
+\bibitem{Plesser07}
+Hans~Ekkehard Plesser, Jochen~Martin Eppler, Abigail Morrison, Markus Diesmann,
+  and Marc-Oliver Gewaltig.
+\newblock Efficient parallel simulation of large-scale neuronal networks on
+  clusters of multiprocessor computers.
+\newblock In A.-M. Kermarrec, L.~Boug{\'e}, and T.~Priol, editors, {\em
+  Euro-Par 2007: Parallel Processing}, volume 4641 of {\em Lecture Notes in
+  Computer Science}, pages 672--681, Berlin, 2007. Springer-Verlag.
+
+% --------------------------------------------------------------------------------
+% Bibliography - the end.
+% --------------------------------------------------------------------------------
+\end{thebibliography}
+
+\end{document}
