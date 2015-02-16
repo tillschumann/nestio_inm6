@@ -24,6 +24,18 @@ double nestio::rand2(nestio::Distribution &distribution)
   return nestio::rand2(distribution.var, distribution.mean);
 }*/
 
+int nestio::getThreadHash(int rank, int thread_num) {
+    int num_threads = omp_get_max_threads();
+    return rank*num_threads+thread_num;
+}
+int nestio::getThreadHash() {
+    int rank;
+    MPI_Comm_rank (MPI_COMM_WORLD, &rank);
+    int thread_num = omp_get_thread_num();
+    
+    return getThreadHash(rank,thread_num);
+}
+
 std::ostream& nestio::operator << (std::ostream &o, const nestio::IDistribution &d)
 {
   //o << "mean=" << d.getMean() << " var=" << d.getVar();

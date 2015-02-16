@@ -5,7 +5,7 @@ EXTLIB = -L$(HDF_INSTALL)/lib
 #CC          = scorep --user mpic++
 CC          = mpic++
 #CFLAGS      = -g -O0 -std=c++0x
-CFLAGS      = -std=c++0x -DENABLE_TIMING=0 -g -O0 -fopenmp
+CFLAGS      = -std=c++0x -DENABLE_TIMING=0 -g -O0 -fopenmp -D_DEBUG_MODE=1
 #LIB         = -lsz -lz -lm
 LIB	= -lhdf5 -lrt -lz -lsz
 

@@ -116,11 +116,20 @@ class NESTProxy
 			    conf.numberOfValuesWrittenByMeter->init();
 			    
 			    int thread_num = omp_get_thread_num();
+			    bool spikedetector_config_for_thread = (conf.spikedetector_configs.find(nestio::getThreadHash())!=conf.spikedetector_configs.end());
+			    int nosdpt;
+			    if (spikedetector_config_for_thread)
+			      nosdpt = conf.spikedetector_configs[nestio::getThreadHash()].size();
+			    else
+			      nosdpt = conf.numberOfSpikeDetectorsPerThread->getIntValue();
 			    
-			    //get values from sd and mm list
+			    bool multimeter_config_for_thread = conf.multimeter_configs.find(nestio::getThreadHash())!=conf.multimeter_configs.end();
+			    int nompt;
+			    if (multimeter_config_for_thread)
+			      nompt = conf.multimeter_configs[nestio::getThreadHash()].size();
+			    else
+			      nompt = conf.numberOfMultimetersPerThread->getIntValue();
 			    
-			    int nosdpt = conf.numberOfSpikeDetectorsPerThread->getIntValue();
-			    int nompt = conf.numberOfMultimetersPerThread->getIntValue();
 			    
 			    #pragma omp critical 
 			    {
@@ -130,8 +139,12 @@ class NESTProxy
 			    
 			    int neuron_id_offset = (thread_num*nosdpt)+rank*num_threads*nosdpt;
 			    for (int i=0;i<nosdpt;i++) {
+			      
 				SpikeDetector* spikeDetector = new SpikeDetector(neuron_id_offset+i, &logger);
-				spikeDetector->connect2Neuron(neuron_id_offset+i,conf.spikesPerDector);
+				if (spikedetector_config_for_thread)
+				  spikeDetector->connect2Neuron(neuron_id_offset+i,conf.spikedetector_configs[nestio::getThreadHash()].at(i).spikesPerDector);
+				else
+				  spikeDetector->connect2Neuron(neuron_id_offset+i,conf.spikesPerDector);
 				spikeDetector->singup();
 				spikeDetectors[thread_num].push_back(spikeDetector);
 			    }
@@ -139,8 +152,17 @@ class NESTProxy
 			    
 			    int multimeter_id_offset = (thread_num*nompt)+rank*num_threads*nompt;
 			    for (int i=0;i<nompt;i++) {
-				double interval = conf.samplingIntervalsOfMeter->getValue();
-				Multimeter* multimeter = new Multimeter(multimeter_id_offset+i, interval, simSettings, conf.numberOfValuesWrittenByMeter->getIntValue(), &logger);
+				double interval;
+				Multimeter* multimeter;
+				if (multimeter_config_for_thread) {
+				  interval = conf.multimeter_configs[nestio::getThreadHash()].at(i).samplingIntervals->getValue();
+				  multimeter = new Multimeter(multimeter_id_offset+i, interval, simSettings, conf.multimeter_configs[nestio::getThreadHash()].at(i).numberOfValuesWritten->getIntValue(), &logger);
+				}
+				else {
+				  interval = conf.samplingIntervalsOfMeter->getValue();
+				  multimeter = new Multimeter(multimeter_id_offset+i, interval, simSettings, conf.numberOfValuesWrittenByMeter->getIntValue(), &logger);
+
+				}
 				multimeter->connect2Neuron(multimeter_id_offset+i);
 				multimeter->singup();
 				multimeters[thread_num].push_back(multimeter);

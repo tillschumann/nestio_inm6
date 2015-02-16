@@ -16,7 +16,7 @@
 #PBS -N hdf5experiment
 
 ### set the number of nodes and processes per node (ppn)
-#PBS -l select=1:ppn=1
+#PBS -l select=1:ppn=2
 
 ### mail alert at (b)eginning, (e)nd and (a)bortion of execution
 ##PBS -m bea
@@ -75,7 +75,7 @@ echo "-------------------------------------------./re	-----------"
 cd $PBS_O_WORKDIR
 
 export MPI_NODE_COUNT=1
-export OMP_NUM_THREADS=1
+export OMP_NUM_THREADS=2
 
 
 ### execute script

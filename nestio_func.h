@@ -8,6 +8,7 @@
 #include <string>
 #include <mpi.h>
 #include <omp.h>
+#include <vector>
 
 #include <tr1/random>
 
@@ -296,7 +297,7 @@ namespace nestio
   struct Multimeter_Config {
     IDistribution *numberOfValuesWritten;
     IDistribution *samplingIntervals;
-    IDistribution *deadTime;
+    //IDistribution *deadTime;
   };
   
   struct Spikedetector_Config {
@@ -306,8 +307,8 @@ namespace nestio
   struct Configuration {
     Loggers logger;
     int bufferSize;
-    std::vector<Multimeter_Config> multimeter_configs;
-    std::vector<Spikedetector_Config> spikedetector_configs;
+    std::map<int,std::vector<Multimeter_Config>> multimeter_configs;
+    std::map<int,std::vector<Spikedetector_Config>> spikedetector_configs;
     IDistribution *numberOfThreads;
     IDistribution *numberOfProcesses;
     IDistribution *numberOfSpikeDetectorsPerThread;
@@ -325,6 +326,9 @@ namespace nestio
   
   extern double rand2(double var, double mean);
   extern double rand2(StandardDistribution &distribution);
+  
+  extern int getThreadHash();
+  extern int getThreadHash(int rank, int thread_num);
 };
 
 #endif
