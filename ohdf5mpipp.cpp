@@ -159,37 +159,37 @@ void OHDF5mpipp::updateSpikeDataSets(const double& t)
     
 }
 
-void OHDF5mpipp::record_spike(SpikeDetector* spike, int neuron_id, int timestamp)
+void OHDF5mpipp::record_spike(int id, int neuron_id, int timestamp)
 {
   const int thread_num = omp_get_thread_num();
     switch (logger_type) {
       case nestio::Standard:
-	srecord_spike(spike, neuron_id, timestamp);
+	srecord_spike(id, neuron_id, timestamp);
 	break;
       case nestio::Buffered:
-	brecord_spike(spike, neuron_id, timestamp);
+	brecord_spike(id, neuron_id, timestamp);
 	break;
       case nestio::Collective:
-	crecord_spike(spike, neuron_id, timestamp);
+	crecord_spike(id, neuron_id, timestamp);
 	break;
     }
 }
 
-void OHDF5mpipp::srecord_spike(SpikeDetector* spike, int neuron_id, int timestamp)
+void OHDF5mpipp::srecord_spike(int id, int neuron_id, int timestamp)
 {
   #ifdef _DEBUG_MODE
-  std::cout << "recording: \t" << spike->spikedetector_id << "\t" << neuron_id << "\t" << timestamp << std::endl;
+  std::cout << "recording: \t" << id << "\t" << neuron_id << "\t" << timestamp << std::endl;
   #endif
   char buffer[3*sizeof(int)];
-  memcpy(buffer, &spike->spikedetector_id, sizeof(int));
+  memcpy(buffer, &id, sizeof(int));
   memcpy(buffer+sizeof(int), &neuron_id, sizeof(int));
   memcpy(buffer+2*sizeof(int), &timestamp, sizeof(int));
   storeContinuousAnalogSignal(spike_dataset,buffer,1);
 }	
-void OHDF5mpipp::brecord_spike(SpikeDetector* spike, int neuron_id, int timestamp)
+void OHDF5mpipp::brecord_spike(int id, int neuron_id, int timestamp)
 {
   #ifdef _DEBUG_MODE
-  std::cout << "brecording: \t" << spike->spikedetector_id << "\t" << neuron_id << "\t" << timestamp << std::endl;
+  std::cout << "brecording: \t" << id << "\t" << neuron_id << "\t" << timestamp << std::endl;
   #endif
   
   //const int thread_num = omp_get_thread_num();
@@ -200,23 +200,23 @@ void OHDF5mpipp::brecord_spike(SpikeDetector* spike, int neuron_id, int timestam
     storeContinuousAnalogSignal(spike_dataset, buffer_spike->read(), buffer_spike->getSize()/spike_dataset.sizeof_entry);
     buffer_spike->clear();
   }
-  int spikedetector_id = spike->spikedetector_id;
-  *buffer_spike << spikedetector_id << neuron_id << timestamp;
+  
+  *buffer_spike << id << neuron_id << timestamp;
   buffer_spike->unlock();
 }
 
-void OHDF5mpipp::crecord_spike(SpikeDetector* spike, int neuron_id, int timestamp)
+void OHDF5mpipp::crecord_spike(int id, int neuron_id, int timestamp)
 {
   #ifdef _DEBUG_MODE
-  std::cout << "crecording: \t" << spike->spikedetector_id << "\t" << neuron_id << "\t" << timestamp << std::endl;
+  std::cout << "crecording: \t" << id << "\t" << neuron_id << "\t" << timestamp << std::endl;
   #endif
   
   //const int thread_num = omp_get_thread_num();
  
   buffer_spike->lock();
   buffer_spike->getEnoughFreeSpace(spike_dataset.sizeof_entry);
-  int spikedetector_id = spike->spikedetector_id;
-  *buffer_spike << spikedetector_id << neuron_id << timestamp;
+  
+  *buffer_spike << id << neuron_id << timestamp;
   buffer_spike->unlock();
 }
 
@@ -271,13 +271,13 @@ void OHDF5mpipp::storeContinuousAnalogSignal(HDF5DataSet &dataset, char* values,
 }
 
 
-void OHDF5mpipp::record_multi(Multimeter* multi, int neuron_id, int timestamp, double *v)
+void OHDF5mpipp::record_multi(int id, int neuron_id, int timestamp, const std::vector<double_t>& data)
 {
     char buffer[3*sizeof(int)+multi_dataset.max_numberOfValues*sizeof(double)];
-    memcpy(buffer, &multi->multimeter_id, sizeof(int));
+    memcpy(buffer, &id, sizeof(int));
     memcpy(buffer+sizeof(int), &neuron_id, sizeof(int));
     memcpy(buffer+2*sizeof(int), &timestamp, sizeof(int));
-    memcpy(buffer+3*sizeof(int), v, multi->numberOfValues*sizeof(double));
+    memcpy(buffer+3*sizeof(int), &data[0], data.size()*sizeof(double));
     storeContinuousAnalogSignal(multi_dataset, buffer, 1);  //TODO more values should be possible
 }
 
@@ -408,29 +408,7 @@ void OHDF5mpipp::registerHDF5DataSet(HDF5DataSet& dataset, char* name)
   //status = H5Sclose (filespace);
 }
 
-void OHDF5mpipp::signup_spike(SpikeDetector* spike, int neuron_id, int expectedsize)
-{  
-  #pragma omp critical
-  {
-    signup_spike(spike->spikedetector_id, neuron_id, expectedsize, 1); //TODO fixed expected size
-    
-    //not nice!!
-    spike_ptrs.push_back(spike);
-  }
-}
-
-void OHDF5mpipp::signup_multi(Multimeter* multi, int neuron_id, int buf)
-{
-#pragma omp critical
-  {
-    signup_multi(multi->multimeter_id, neuron_id, (simSettings.T)/multi->samlpingInterval, multi->numberOfValues, multi->samlpingInterval);
-    
-    //not nice!!
-    multi_ptrs.push_back(multi);
-  }
-}
-
-void OHDF5mpipp::signup_spike(int id, int neuron_id, int expectedsize, int buf)
+void OHDF5mpipp::signup_spike(int id, int neuron_id, int expectedSpikeCount)
 {
   
   std::stringstream datasetname_ss;
@@ -439,8 +417,8 @@ void OHDF5mpipp::signup_spike(int id, int neuron_id, int expectedsize, int buf)
   oPrivateDataSet ownDataSet;
   ownDataSet.head.id = id;
   ownDataSet.neuron_id = neuron_id;
-  ownDataSet.head.size = expectedsize;
-  ownDataSet.buffer_size = buf;
+  ownDataSet.head.size = expectedSpikeCount;
+  ownDataSet.buffer_size = expectedSpikeCount;  //TODO
   ownDataSet.head.numberOfValues = 0;
   ownDataSet.type = 0;
   strcpy(ownDataSet.head.name, datasetname_ss.str().c_str());
@@ -451,7 +429,7 @@ void OHDF5mpipp::signup_spike(int id, int neuron_id, int expectedsize, int buf)
   
   spike_datasets.push_back(ownDataSet);
 }
-void OHDF5mpipp::signup_multi(int id, int neuron_id, int size, int buf, double interval)
+void OHDF5mpipp::signup_multi(int id, int neuron_id, double sampling_interval, std::vector<Name> valueNames, double simulationTime)
 {
   std::stringstream datasetname_ss;
   datasetname_ss << "multi_" << id << "_neuron_" << neuron_id;
@@ -459,11 +437,11 @@ void OHDF5mpipp::signup_multi(int id, int neuron_id, int size, int buf, double i
   oPrivateDataSet ownDataSet;
   ownDataSet.head.id = id;
   ownDataSet.neuron_id = neuron_id;
-  ownDataSet.head.size = size;
+  ownDataSet.head.size = 1000;      //TODO: simulationTime / sampling_interval
   //ownDataSet.buffer_size = buf;
-  ownDataSet.head.numberOfValues = buf;
+  ownDataSet.head.numberOfValues = 1000;  //TODO
   ownDataSet.type = 1;
-  ownDataSet.interval = interval;
+  ownDataSet.interval = sampling_interval;
   strcpy(ownDataSet.head.name, datasetname_ss.str().c_str());
   #ifdef _DEBUG_MODE
   std::cout << "signup_multi:" << datasetname_ss.str() << std::endl;

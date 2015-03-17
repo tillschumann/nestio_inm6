@@ -130,20 +130,20 @@ class Sionlib_logger : public ILogger
 		void createDatasets();
 		void updateDatasetSizes(const double& t);
 		
-		void record_spike(SpikeDetector* spike, int neuron_id, int timestamp);
-		void record_multi(Multimeter* multi, int neuron_id, int timestamp, double* v);
+		void record_spike(int spikedetector_id, int neuron_id, int timestamp);
+		void record_multi(int multimeter_id, int neuron_id, int timestamp, const std::vector<double_t>& data);
 		
 		void srecord_spike(int spikedetector_id, int neuron_id, int timestamp);
-		void srecord_multi(Multimeter* multi, int neuron_id, int timestamp, double* v);
+		void srecord_multi(int multimeter_id, int neuron_id, int timestamp, const std::vector<double_t>& data);
 		
 		void brecord_spike(int spikedetector_id, int neuron_id, int timestamp);
-		void brecord_multi(Multimeter* multi, int neuron_id, int timestamp, double* v);
+		void brecord_multi(int multimeter_id, int neuron_id, int timestamp, const std::vector<double_t>& data);
 		
 		void crecord_spike(int spikedetector_id, int neuron_id, int timestamp);
-		void crecord_multi(Multimeter* multi, int neuron_id, int timestamp, double* v);
+		void crecord_multi(int multimeter_id, int neuron_id, int timestamp, const std::vector<double_t>& data);
 		
-		void signup_spike(SpikeDetector* spike, int neuron_id, int buf);
-		void signup_multi(Multimeter* multi, int neuron_id, int buf);
+		void signup_spike(int id, int neuron_id, int expectedSpikeCount);
+		void signup_multi(int id, int neuron_id, double sampling_interval, std::vector<Name> valueNames, double simulationTime);
 		
 };
 

@@ -62,7 +62,7 @@ class NESTProxy
 
 		void sync(double& t)
 		{
-			logger.updateDatasetSizes(t);
+			logger.syncronize(t);
 		}
 	public:
 		NESTProxy(nestio::SimSettings &simSettings,
@@ -168,12 +168,13 @@ class NESTProxy
 				multimeters[thread_num].push_back(multimeter);
 			    }
 			  #pragma omp barrier
-			  logger.createDatasets();
+			  
 			}
 		}
 
 		~NESTProxy()
 		{
+		  
 		    #ifdef _DEBUG_MODE
 		    std::cout << "destructor NESTProxy" << std::endl;
 		    #endif
@@ -219,6 +220,8 @@ class NESTProxy
 			
 			//SCOREP_USER_REGION_DEFINE(epik_sync);
 			//SCOREP_USER_REGION_DEFINE(epik_sleep);
+			
+			logger.initialize(simSettings.T);
 			
 			#pragma omp parallel firstprivate(t,timestamp)
 			{
@@ -280,7 +283,8 @@ class NESTProxy
 			#ifdef _DEBUG_MODE
 			std::cout << "Iterations done" << std::endl;
 			#endif
-		  }
+		    }
+		    logger.finalize();
 		}
 };
 

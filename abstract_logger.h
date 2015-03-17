@@ -12,18 +12,26 @@ class ILogger
 public:
   ILogger() {};
   virtual ~ILogger() {};
-  //virtual void setSize(int,int) {}
-  //virtual void setBufferSize(int) {}
-  virtual void updateDatasetSizes(const double& t) {}
+  /*virtual void updateDatasetSizes(const double& t) {}
   virtual void record_multi(Multimeter* multi, int neuron_id, int timestamp, double* v) {}
-  virtual void record_spike(SpikeDetector* spike, int neuron_id, int timestamp) {}
-  //virtual void signup_spike(int id, int neuron_id, int expectedsize, int buffer_size) {}
-  //virtual void signup_multi(int id, int neuron_id, int exactsize, int buffer_size) {}
-  
+  virtual void record_spike(SpikeDetector* spike, int neuron_id, int timestamp) {}  
   virtual void signup_spike(SpikeDetector* spike, int neuron_id, int buf) {}
   virtual void signup_multi(Multimeter* multi, int neuron_id, int buf) {}
+  virtual void createDatasets() {}*/
   
-  virtual void createDatasets() {}
+  
+  
+  virtual void record_multi(int id, int neuron_id, int timestamp, const std::vector<double_t>& data) {}
+  virtual void record_spike(int id, int neuron_id, int timestamp) {}
+  
+  
+  
+  virtual void signup_spike(int id, int neuron_id, int expectedSpikeCount) {}
+  virtual void signup_multi(int id, int neuron_id, double sampling_interval, std::vector<Name> valueNames, double simulationTime) {}
+  
+  virtual void syncronize(const double& t) {}
+  virtual void initialize(const double T) {}
+  virtual void finalize() {}
 };
   
 #endif

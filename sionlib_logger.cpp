@@ -29,26 +29,24 @@ void Sionlib_logger::brecord_spike(int spikedetector_id, int neuron_id, int time
   buffer_spike[thread_num] << spikedetector_id << neuron_id << timestamp;
 }
 
-void Sionlib_logger::crecord_multi(Multimeter* multi, int neuron_id, int timestamp, double* v)
+void Sionlib_logger::crecord_multi(int multimeter_id, int neuron_id, int timestamp, const std::vector<double_t>& data)
 {
   const int thread_num = omp_get_thread_num();
   
-  int multimeter_id=multi->multimeter_id;
-  int numberOfValues=multi->numberOfValues;
+  int numberOfValues=data.size();
   buffer_multi[thread_num].getEnoughFreeSpace(4*sizeof(int)+numberOfValues*sizeof(double));
   buffer_multi[thread_num] << multimeter_id << neuron_id << timestamp << numberOfValues;
   for (int i=0; i<numberOfValues; i++)
   {
-    buffer_multi[thread_num] << v[i];
+    buffer_multi[thread_num] << data[i];
   }
 }
 
-void Sionlib_logger::brecord_multi(Multimeter* multi, int neuron_id, int timestamp, double* v)
+void Sionlib_logger::brecord_multi(int multimeter_id, int neuron_id, int timestamp, const std::vector<double_t>& data)
 {
   const int thread_num = omp_get_thread_num();
   
-  int multimeter_id=multi->multimeter_id;
-  int numberOfValues=multi->numberOfValues;
+  int numberOfValues=data.size();
   if (!buffer_multi[thread_num].isEnoughFreeSpace(4*sizeof(int)+numberOfValues*sizeof(double)))
   {
     sion_fwrite(buffer_multi[thread_num].read(), buffer_multi[thread_num].getSize(), 1, multi_sid[thread_num]);
@@ -57,40 +55,40 @@ void Sionlib_logger::brecord_multi(Multimeter* multi, int neuron_id, int timesta
   buffer_multi[thread_num] << multimeter_id << neuron_id << timestamp << numberOfValues;
   for (int i=0; i<numberOfValues; i++)
   {
-    buffer_multi[thread_num] << v[i];
+    buffer_multi[thread_num] << data[i];
   }
 }
 
 
-void Sionlib_logger::record_spike(SpikeDetector* spike, int neuron_id, int timestamp)
+void Sionlib_logger::record_spike(int spikedetector_id, int neuron_id, int timestamp)
 {
   const int thread_num = omp_get_thread_num();
     switch (loggerType) {
       case nestio::Standard:
-	srecord_spike(spike->spikedetector_id, neuron_id, timestamp);
+	srecord_spike(spikedetector_id, neuron_id, timestamp);
 	break;
       case nestio::Buffered:
-	brecord_spike(spike->spikedetector_id, neuron_id, timestamp);
+	brecord_spike(spikedetector_id, neuron_id, timestamp);
 	break;
       case nestio::Collective:
-	crecord_spike(spike->spikedetector_id, neuron_id, timestamp);
+	crecord_spike(spikedetector_id, neuron_id, timestamp);
 	break;
     }
     header_spike[thread_num].numberOfWrittenData++;
 }
 
-void Sionlib_logger::record_multi(Multimeter* multi, int neuron_id, int timestamp, double* v)
+void Sionlib_logger::record_multi(int multimeter_id, int neuron_id, int timestamp, const std::vector<double_t>& data)
 {
   const int thread_num = omp_get_thread_num();
     switch (loggerType) {
       case nestio::Standard:
-	srecord_multi(multi,neuron_id, timestamp, v);
+	srecord_multi(multimeter_id,neuron_id, timestamp, data);
 	break;
       case nestio::Buffered:
-	brecord_multi(multi,neuron_id, timestamp, v);
+	brecord_multi(multimeter_id,neuron_id, timestamp, data);
 	break;
       case nestio::Collective:
-	crecord_multi(multi,neuron_id, timestamp, v);
+	crecord_multi(multimeter_id,neuron_id, timestamp, data);
 	break;
     }
     header_multi[thread_num].numberOfWrittenData++;
@@ -107,24 +105,24 @@ void Sionlib_logger::srecord_spike(int spikedetector_id, int neuron_id, int time
   sion_fwrite(&timestamp, sizeof(int), 1, spike_sid[thread_num]);
 }
 
-void Sionlib_logger::srecord_multi(Multimeter* multi, int neuron_id, int timestamp, double* v)
+void Sionlib_logger::srecord_multi(int multimeter_id, int neuron_id, int timestamp, const std::vector<double_t>& data)
 {
   const int thread_num = omp_get_thread_num();
-  int multimeter_id=multi->multimeter_id;
-  int numberOfValues=multi->numberOfValues;
+
+  int numberOfValues=data.size();
   
   sion_ensure_free_space(multi_sid[thread_num], 4*sizeof(int)+(numberOfValues)*sizeof(double));
   sion_fwrite(&multimeter_id, sizeof(int), 1, multi_sid[thread_num]);
   sion_fwrite(&neuron_id, sizeof(int), 1, multi_sid[thread_num]);
   sion_fwrite(&timestamp, sizeof(int), 1, multi_sid[thread_num]);
   sion_fwrite(&numberOfValues, sizeof(int), 1, multi_sid[thread_num]);
-  sion_fwrite(v, sizeof(double), numberOfValues, multi_sid[thread_num]);
+  sion_fwrite(&data[0], sizeof(double), numberOfValues, multi_sid[thread_num]);
 }
 
 /*
  * Collecting header informations for SpikeDetectors
  */
-void Sionlib_logger::signup_spike(SpikeDetector* spike, int neuron_id, int buf)
+void Sionlib_logger::signup_spike(int id, int neuron_id, int expectedSpikeCount)
 {
   //std::cout << "Sionlib_logger::signup_spike" << std::endl;
   const int thread_num = omp_get_thread_num();
@@ -132,7 +130,7 @@ void Sionlib_logger::signup_spike(SpikeDetector* spike, int neuron_id, int buf)
   {
     SionFileHeaderNode node;
     node.neuron_id=neuron_id;
-    node.id=spike->spikedetector_id;
+    node.id=id;
     node.interval=0;
     
     header_spike[thread_num].nodes.push_back(node);
@@ -148,18 +146,18 @@ void Sionlib_logger::signup_spike(SpikeDetector* spike, int neuron_id, int buf)
 /*
  * Collecting header informations for Multimeters
  */
-void Sionlib_logger::signup_multi(Multimeter* multi, int neuron_id, int buf)
+void Sionlib_logger::signup_multi(int id, int neuron_id, double sampling_interval, std::vector<Name> valueNames, double simulationTime)
 {
   const int thread_num = omp_get_thread_num();
 #pragma omp critical
   {
     SionFileHeaderNode node;
-    node.id=multi->multimeter_id;
+    node.id=id;
     node.neuron_id=neuron_id;
-    node.interval=multi->samlpingInterval;
-    node.numberOfValues=multi->numberOfValues;
-    for (int i=0; i<multi->numberOfValues; i++) {
-      memcpy(node.valueNames[i],multi->valueNames.at(i).c_str(), min(20,(int)multi->valueNames.at(i).size()));
+    node.interval=sampling_interval;
+    node.numberOfValues=valueNames.size();
+    for (int i=0; i<valueNames.size(); i++) {
+      memcpy(node.valueNames[i],valueNames.at(i).c_str(), min(20,(int)valueNames.at(i).size()));
     }
     
     header_multi[thread_num].nodes.push_back(node);

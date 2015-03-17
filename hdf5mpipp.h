@@ -87,15 +87,15 @@ class HDF5mpipp : public ILogger
 		//void single_write(double& t, int& v, const int ptr);
 		//void single_write(double& t, double& v, const int ptr);
 		
-		void record_spike(SpikeDetector* spike, int neuron_id, int timestamp);
-		void record_multi(int neuron_id, int timestamp, double* v);
-		void signup_spike(int id, int neuron_id, int expectedsize, int buffer_size);
-		void signup_multi(int id, int neuron_id, int exactsize, int buffer_size);
+		void record_spike(int id, int neuron_id, int timestamp);
+		void record_multi(int id, int neuron_id, int timestamp, const std::vector<double_t>& data);
+		void signup_spike(int id, int neuron_id, int expectedSpikeCount);
+		void signup_multi(int id, int neuron_id, double sampling_interval, std::vector<Name> valueNames, double simulationTime);
 		
-		void signup_spike(SpikeDetector* spike, int neuron_id, int buf);
-		void signup_multi(Multimeter* multi, int neuron_id, int buf);
+		//void signup_spike(SpikeDetector* spike, int neuron_id, int buf);
+		//void signup_multi(Multimeter* multi, int neuron_id, int buf);
 		
-		void storeContinuousAnalogSignal(PrivateDataSet &pDataSet, int timestamp, double *v);
+		void storeContinuousAnalogSignal(PrivateDataSet &pDataSet, int timestamp, const double *v);
 		
 		void createDatasets();
 };

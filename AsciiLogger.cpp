@@ -20,45 +20,45 @@ void AsciiLogger::print_weight_(std::ostream& os, double weight)
 
 
 
-void AsciiLogger::record_spike(SpikeDetector* spike, int neuron_id, int timestamp)
+void AsciiLogger::record_spike(int id, int neuron_id, int timestamp)
 {
   #pragma omp critical
   {
-    print_id_(*spike_fs_, spike->spikedetector_id);
+    print_id_(*spike_fs_, id);
     print_id_(*spike_fs_, neuron_id);
     print_time_(*spike_fs_, timestamp);
     *spike_fs_ << '\n';
   }
 }
 
-void AsciiLogger::record_multi(Multimeter* multi, int neuron_id, int timestamp, double* v)
+void AsciiLogger::record_multi(int id, int neuron_id, int timestamp, const std::vector<double_t>& data)
 {
   #pragma omp critical
   {
-    print_id_(*multi_fs_, multi->multimeter_id);
+    print_id_(*multi_fs_, id);
     print_id_(*multi_fs_, neuron_id);
     print_time_(*multi_fs_, timestamp);
-    for (int i=0;i<multi->numberOfValues; i++)
-      print_weight_(*multi_fs_, v[i]);
+    for (int i=0;i<data.size(); i++)
+      print_weight_(*multi_fs_, data[i]);
     *multi_fs_ << '\n';
   }
 }
 
-void AsciiLogger::signup_spike(SpikeDetector* spike, int neuron_id, int buf)
+void AsciiLogger::signup_spike(int id, int neuron_id, int expectedSpikeCount)
 {
   #pragma omp critical
   {
-    *spike_fs_ << spike->spikedetector_id << " " << neuron_id << "\n";
+    *spike_fs_ << id << " " << neuron_id << "\n";
   }
 }
 
-void AsciiLogger::signup_multi(Multimeter* multi, int neuron_id, int buf)
+void AsciiLogger::signup_multi(int id, int neuron_id, double sampling_interval, std::vector<Name> valueNames, double simulationTime)
 {
   #pragma omp critical
   {
-    *multi_fs_ << multi->multimeter_id << " " << neuron_id << " " << multi->numberOfValues << " ";
-    for (int i=0; i<multi->numberOfValues; i++)
-      *multi_fs_ << multi->valueNames[i] << " ";
+    *multi_fs_ << id << " " << neuron_id << " " << valueNames.size() << " ";
+    for (int i=0; i<valueNames.size(); i++)
+      *multi_fs_ << valueNames[i] << " ";
     *multi_fs_ << "\n";
   }
 }
@@ -87,14 +87,4 @@ AsciiLogger::~AsciiLogger()
     
     delete spike_fs_;
     delete multi_fs_;
-}
-
-/*void AsciiLogger::setBufferSize(int s)
-{
-    //
-}*/
-
-void AsciiLogger::updateDatasetSizes(const double& t)
-{
-    //
 }

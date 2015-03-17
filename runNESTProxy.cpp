@@ -5,7 +5,7 @@
 #include "hdf5mpipp.h"
 #include "ohdf5mpipp.h"
 #include "sionlib_logger.h"
-#include "AsciiLogger.h"
+#include "AsciiLogger2.h"
 //#include "abstract_logger.h"
 #include "timer/scopetimer.h"
 #include "timer/stopwatch.h"
@@ -90,9 +90,9 @@ void run(nestio::Configuration &conf, nestio::SimSettings &simSettings,int argc,
 	logger = new OHDF5mpipp(fns.str(), conf.bufferSize, nestio::Collective, simSettings);
 	break;
       case nestio::ASCII:
-	sfn << output_dir_file.str() << "/data.spike_ascii";
-	mfn << output_dir_file.str() << "/data.multi_ascii";
-	logger = new AsciiLogger(sfn.str(), mfn.str());
+	sfn << output_dir_file.str();// << "/data.spike_ascii";
+	mfn << output_dir_file.str();// << "/data.multi_ascii";
+	logger = new nest::AsciiLogger2(sfn.str());
 	break;
     }
     nest::SeriesTimer writetimer[conf.numberOfThreads->getIntValue()],
@@ -100,11 +100,11 @@ void run(nestio::Configuration &conf, nestio::SimSettings &simSettings,int argc,
 		      sleeptimer[conf.numberOfThreads->getIntValue()],
 		      delivertimer[conf.numberOfThreads->getIntValue()];
     
-    NESTProxy proxy( simSettings,
+    NESTProxy* proxy = new NESTProxy( simSettings,
 		      conf,
 		      *logger,
 		      writetimer, synctimer, sleeptimer,delivertimer);
-    proxy.run();
+    proxy->run();
     
     std::stringstream benchmark_write_filename;
     std::stringstream benchmark_sync_filename;
@@ -170,6 +170,7 @@ void run(nestio::Configuration &conf, nestio::SimSettings &simSettings,int argc,
 	  benchfile_deliver.close();
 	}
     }
+    delete proxy;
     delete logger;
 }
 
@@ -182,19 +183,17 @@ int main(int argc, char *argv[])
 	#endif
 	int numberOfThreads=omp_get_max_threads(); //must not be changed
 	int threadNumber=omp_get_thread_num();
-
-	
 	
 	nestio::SimSettings simSettings;
 	simSettings.T=10.0;
 	simSettings.Tresolution=0.1;
 	
 	nestio::Configuration conf;
-	conf.logger = nestio::SIONLIB_BUFFERED;
+	conf.logger = nestio::ASCII;
 	conf.bufferSize = 2400;
 	conf.numberOfThreads=new nestio::FixIntValue(numberOfThreads); //must not be changed
-	conf.numberOfSpikeDetectorsPerThread=new nestio::FixIntValue(0);
-	conf.spikesPerDector = new nestio::FixIntValue(100);
+	conf.numberOfSpikeDetectorsPerThread=new nestio::FixIntValue(2);
+	conf.spikesPerDector = new nestio::FixIntValue(5);
 	conf.numberOfMultimetersPerThread= new nestio::FixIntValue(0);
 	conf.samplingIntervalsOfMeter = new nestio::FixDoubleValue(0.05);
 	conf.deadTimeSpikeDetector = new nestio::FixIntValue(35);

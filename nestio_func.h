@@ -15,6 +15,10 @@
 #ifndef NESTIO_FUNC
 #define NESTIO_FUNC
 
+
+typedef std::string Name;  //TODO: Name class from NEST 
+typedef double double_t;   //TODO: double_t class from NEST 
+
 namespace nestio
 {
   class IDistribution

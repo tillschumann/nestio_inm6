@@ -11,7 +11,7 @@
 class Multimeter {
 private:
   double lastRecordT;
-  double *values;
+  std::vector<double_t> values;
   ILogger* logger;
   bool isSinup;
   
@@ -19,6 +19,7 @@ public:
   
   int multimeter_id;
   double samlpingInterval;
+  double simulationTime;
   int numberOfValues;
   std::vector<int> neuron_ids;
   std::vector<std::string> valueNames;
@@ -26,7 +27,9 @@ public:
   Multimeter(const int multimeter_id, const double interval, nestio::SimSettings &simSettings, const int numberOfValues, ILogger* logger):
   multimeter_id(multimeter_id),
   samlpingInterval(simSettings.Tresolution),
+  simulationTime(simSettings.T),
   numberOfValues(numberOfValues),
+  values(numberOfValues),
   logger(logger),
   isSinup(false)
   {
@@ -39,7 +42,7 @@ public:
     #endif
     //logger->signup_multi(multimeter_id, (T-dt)/samlpingInterval, 1);
     //logger->signup_multi(this, 1);
-    values = new double[numberOfValues];
+    //values = new double[numberOfValues];
     for (int i=0; i<numberOfValues; i++) {
       values[i] = multimeter_id+0.1*i;
       std::stringstream ss;
@@ -50,7 +53,6 @@ public:
   
   ~Multimeter()
   {
-    delete values;
   }
   
   void connect2Neuron(int id)
@@ -67,7 +69,7 @@ public:
   void singup()
   {
     for (int i=0; i<neuron_ids.size(); i++) {
-      logger->signup_multi(this,neuron_ids.at(i),1);
+      logger->signup_multi(multimeter_id,neuron_ids.at(i),samlpingInterval,valueNames,simulationTime);
     }
     isSinup = true;
   }
@@ -81,7 +83,7 @@ public:
       values[0]+=0.3;
       for (int n=0; n<neuron_ids.size(); n++) {
 	values[0]+=0.01;
-	logger->record_multi(this, neuron_ids.at(n), timestamp, values);
+	logger->record_multi(multimeter_id, neuron_ids.at(n), timestamp, values);
       }
      
     }

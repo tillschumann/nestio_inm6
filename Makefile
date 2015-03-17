@@ -12,17 +12,17 @@ LIB	= -lhdf5 -lrt -lz -lsz
 INCLUDE   = -I$(HDF_INSTALL)/include
 LIBSHDF   = $(EXTLIB) $(HDF_INSTALL)/lib/libhdf5_cpp.a
 
-MPISIONLIB =  `~/sionlib/install/sionlib_linux_gomp/bin/sionconfig --libs --ompi -be -64`
-MPISIONCFLAGS = `~/sionlib/install/sionlib_linux_gomp/bin/sionconfig --cflags --ompi -be -64` 
+MPISIONLIB =  `~/usr/sionlib-1.5.5-svn-1690/bin/sionconfig --libs --ompi -be -64`
+MPISIONCFLAGS = `~/usr/sionlib-1.5.5-svn-1690/bin/sionconfig --cflags --ompi -be -64` 
 
-SERSIONLIB =  `~/sionlib/install/sionlib_linux_gomp/bin/sionconfig --libs --ser -be -64`
-SERSIONCFLAGS = `~/sionlib/install/sionlib_linux_gomp/bin/sionconfig --cflags --ser -be -64` 
+SERSIONLIB =  `~/usr/sionlib-1.5.5-svn-1690/bin/sionconfig --libs --ser -be -64`
+SERSIONCFLAGS = `~/usr/sionlib-1.5.5-svn-1690/bin/sionconfig --cflags --ser -be -64` 
 
 all: hdf5mpipp \
  
 
-hdf5mpipp: sionlib_logger.o NESTProxy.o nestio_func.o abstract_logger.o hdf5mpipp.o ohdf5mpipp.o AsciiLogger.o Multimeter.o SpikeDetector.o runNESTProxy.o seriestimer.o stopwatch.o scopetimer.o
-	$(CC) $(CFLAGS) -o runNESTProxy runNESTProxy.o abstract_logger.o nestio_func.o hdf5mpipp.o ohdf5mpipp.o NESTProxy.o sionlib_logger.o AsciiLogger.o Multimeter.o SpikeDetector.o seriestimer.o stopwatch.o scopetimer.o $(INCLUDE) $(LIBSHDF) $(MPISIONLIB) $(LIB)
+hdf5mpipp: sionlib_logger.o NESTProxy.o nestio_func.o abstract_logger.o hdf5mpipp.o ohdf5mpipp.o AsciiLogger2.o Multimeter.o SpikeDetector.o runNESTProxy.o seriestimer.o stopwatch.o scopetimer.o
+	$(CC) $(CFLAGS) -o runNESTProxy runNESTProxy.o abstract_logger.o nestio_func.o hdf5mpipp.o ohdf5mpipp.o NESTProxy.o sionlib_logger.o AsciiLogger2.o Multimeter.o SpikeDetector.o seriestimer.o stopwatch.o scopetimer.o $(INCLUDE) $(LIBSHDF) $(MPISIONLIB) $(LIB)
 	
 runNESTProxy.o: runNESTProxy.cpp
 	$(CC) $(CFLAGS) $(MPISIONCFLAGS) -c runNESTProxy.cpp $(INCLUDE)
@@ -46,8 +46,8 @@ Multimeter.o: Multimeter.cpp Multimeter.h
 	
 sionlib_logger.o: sionlib_logger.cpp
 	$(CC) $(CFLAGS) $(MPISIONCFLAGS) -c sionlib_logger.cpp $(INCLUDE)
-AsciiLogger.o: AsciiLogger.cpp
-	$(CC) $(CFLAGS) $(MPISIONCFLAGS) -c AsciiLogger.cpp $(INCLUDE)
+AsciiLogger2.o: AsciiLogger2.cpp
+	$(CC) $(CFLAGS) $(MPISIONCFLAGS) -c AsciiLogger2.cpp $(INCLUDE)
 stopwatch.o: timer/stopwatch.cpp
 	$(CC) $(CFLAGS) $(MPISIONCFLAGS) -c timer/stopwatch.cpp $(INCLUDE) 
 seriestimer.o: timer/seriestimer.cpp

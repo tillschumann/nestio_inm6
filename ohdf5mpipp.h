@@ -181,10 +181,6 @@ class OHDF5mpipp : public ILogger
 		std::vector<int> global_number_spike;
 		
 		
-		std::vector<Multimeter*> multi_ptrs;
-		std::vector<SpikeDetector*> spike_ptrs;
-		
-		
 		int allocated_mem;
 		
 		int predictNewSpikeWindowSize(const double& t, HDF5DataSet &dataset);
@@ -204,17 +200,17 @@ class OHDF5mpipp : public ILogger
 		//void single_write(double& t, int& v, const int ptr);
 		//void single_write(double& t, double& v, const int ptr);
 		
-		void record_spike(SpikeDetector* spike, int neuron_id, int timestamp);
-		void srecord_spike(SpikeDetector* spike, int neuron_id, int timestamp);
-		void brecord_spike(SpikeDetector* spike, int neuron_id, int timestamp);
-		void crecord_spike(SpikeDetector* spike, int neuron_id, int timestamp);
+		void record_spike(int id, int neuron_id, int timestamp);
+		void srecord_spike(int id, int neuron_id, int timestamp);
+		void brecord_spike(int id, int neuron_id, int timestamp);
+		void crecord_spike(int id, int neuron_id, int timestamp);
 		
-		void record_multi(Multimeter* multi, int neuron_id, int timestamp, double* v);
-		void signup_spike(int id, int neuron_id, int expectedsize, int buffer_size);
-		void signup_multi(int id, int neuron_id, int size, int buf, double interval);
+		void record_multi(int id, int neuron_id, int timestamp, const std::vector<double_t>& data);
+		void signup_spike(int id, int neuron_id, int expectedSpikeCount);
+		void signup_multi(int id, int neuron_id, double sampling_interval, std::vector<Name> valueNames, double simulationTime);
 		
-		void signup_spike(SpikeDetector* spike, int neuron_id, int buf);
-		void signup_multi(Multimeter* multi, int neuron_id, int buf);
+		//void signup_spike(SpikeDetector* spike, int neuron_id, int buf);
+		//void signup_multi(Multimeter* multi, int neuron_id, int buf);
 		
 		void storeContinuousAnalogSignal(HDF5DataSet &dataset, char* values, int n);
 		

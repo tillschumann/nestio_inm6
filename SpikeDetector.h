@@ -52,7 +52,7 @@ public:
   void singup()
   { 
     for (int i=0; i<neuron_ids.size(); i++)
-      logger->signup_spike(this, neuron_ids.at(i),1000);
+      logger->signup_spike(spikedetector_id, neuron_ids.at(i),1000);
     isSinup = true;
   }
   
@@ -65,7 +65,7 @@ public:
 	  #ifdef _DEBUG_MODE
 	    std::cout << "record_spike" << std::endl;
 	  #endif
-	    logger->record_spike(this, neuron_ids.at(n), timestamp);
+	    logger->record_spike(spikedetector_id, neuron_ids.at(n), timestamp);
 	}
       }
   }

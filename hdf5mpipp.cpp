@@ -116,7 +116,7 @@ void HDF5mpipp::updateSpikeDataSets(const double& t)
     
 }
 
-void HDF5mpipp::record_spike(SpikeDetector* spike, int neuron_id, int timestamp)
+void HDF5mpipp::record_spike(int id, int neuron_id, int timestamp)
 {
    PrivateDataSet* pDataSet;
     //find multidataset
@@ -130,7 +130,7 @@ void HDF5mpipp::record_spike(SpikeDetector* spike, int neuron_id, int timestamp)
     //std::cout << "storeContinuousAnalogSignal end" << std::endl;
 }	
 
-void HDF5mpipp::storeContinuousAnalogSignal(PrivateDataSet &pDataSet, int timestamp, double* v)
+void HDF5mpipp::storeContinuousAnalogSignal(PrivateDataSet &pDataSet, int timestamp, const double* v)
 {
     #pragma omp critical
     {
@@ -164,7 +164,7 @@ void HDF5mpipp::storeContinuousAnalogSignal(PrivateDataSet &pDataSet, int timest
 }
 
 
-void HDF5mpipp::record_multi(int neuron_id, int timestamp, double *v)
+void HDF5mpipp::record_multi(int id, int neuron_id, int timestamp, const std::vector<double_t>& data)
 {
     PrivateDataSet* pDataSet;
     //find multidataset
@@ -173,7 +173,7 @@ void HDF5mpipp::record_multi(int neuron_id, int timestamp, double *v)
 	  pDataSet = &multi_datasets[i];
 	}
     }
-    storeContinuousAnalogSignal(*pDataSet, timestamp, v);  //TODO more values should be possible
+    storeContinuousAnalogSignal(*pDataSet, timestamp, &data[0]);  //TODO more values should be possible
 }
 
 void HDF5mpipp::createDatasets()
@@ -211,7 +211,7 @@ void HDF5mpipp::createDatasets()
       PrivateDataSet &ownDataSet = spike_datasets[private_ptr_spike_datasets[i]];
       
       hid_t attr = ownDataSet.dattr_id;
-      H5Awrite(attr, H5T_NATIVE_INT, &spike_ptrs[i]->neuron_ids.at(0));     //TODO
+      H5Awrite(attr, H5T_NATIVE_INT, &spike_ptrs[i]->neuron_ids.at(0));     //TODO: spikepointer is not available anymore
       H5Aclose(attr);
       
       
@@ -400,29 +400,7 @@ void HDF5mpipp::registerHDF5DataSet(PrivateDataSet &dataset, bool isPrivateDatas
   status = H5Sclose (filespace);
 }
 
-void HDF5mpipp::signup_spike(SpikeDetector* spike, int neuron_id, int expectedsize)
-{  
-  #pragma omp critical
-  {
-    signup_spike(spike->spikedetector_id, neuron_id, expectedsize, 1); //TODO fixed expected size
-    
-    //not nice!!
-    spike_ptrs.push_back(spike);
-  }
-}
-
-void HDF5mpipp::signup_multi(Multimeter* multi, int neuron_id, int buf)
-{
-#pragma omp critical
-  {
-    signup_multi(multi->multimeter_id, neuron_id, (simSettings.T)/multi->samlpingInterval, multi->numberOfValues);
-    
-    //not nice!!
-    multi_ptrs.push_back(multi);
-  }
-}
-
-void HDF5mpipp::signup_spike(int id, int neuron_id, int expectedsize, int buf)
+void HDF5mpipp::signup_spike(int id, int neuron_id, int expectedSpikeCount)
 {
   
   std::stringstream datasetname_ss;
@@ -431,8 +409,8 @@ void HDF5mpipp::signup_spike(int id, int neuron_id, int expectedsize, int buf)
   PrivateDataSet ownDataSet;
   ownDataSet.head.id = id;
   ownDataSet.neuron_id = neuron_id;
-  ownDataSet.head.size = expectedsize;
-  ownDataSet.buffer_size = buf;
+  ownDataSet.head.size = expectedSpikeCount;
+  ownDataSet.buffer_size = expectedSpikeCount;
   ownDataSet.head.numberOfValues = 0;
   ownDataSet.type = 0;
   strcpy(ownDataSet.head.name, datasetname_ss.str().c_str());
@@ -443,7 +421,7 @@ void HDF5mpipp::signup_spike(int id, int neuron_id, int expectedsize, int buf)
   
   spike_datasets.push_back(ownDataSet);
 }
-void HDF5mpipp::signup_multi(int id, int neuron_id, int size, int buf)
+void HDF5mpipp::signup_multi(int id, int neuron_id, double sampling_interval, std::vector<Name> valueNames, double simulationTime)
 {
   std::stringstream datasetname_ss;
   datasetname_ss << "multi_" << id << "_neuron_" << neuron_id;
@@ -451,9 +429,9 @@ void HDF5mpipp::signup_multi(int id, int neuron_id, int size, int buf)
   PrivateDataSet ownDataSet;
   ownDataSet.head.id = id;
   ownDataSet.neuron_id = neuron_id;
-  ownDataSet.head.size = size;
+  ownDataSet.head.size = 1000;		//TODO
   //ownDataSet.buffer_size = buf;
-  ownDataSet.head.numberOfValues = buf;
+  ownDataSet.head.numberOfValues = 1000;  //TODO: set buf
   ownDataSet.type = 1;
   strcpy(ownDataSet.head.name, datasetname_ss.str().c_str());
   #ifdef _DEBUG_MODE
