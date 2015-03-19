@@ -336,3 +336,10 @@ const std::string nest::AsciiLogger2::build_filename_(std::string prefix) const
   return file_path.str();
 #endif
 }
+
+/*void nest::AsciiLogger2::Parameters_::set(const AsciiLogger2& al,
+                                             const Buffers_&,
+                                             const DictionaryDatum& d)
+{
+  
+}*/

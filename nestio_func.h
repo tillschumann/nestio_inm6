@@ -18,6 +18,7 @@
 
 typedef std::string Name;  //TODO: Name class from NEST 
 typedef double double_t;   //TODO: double_t class from NEST 
+//typedef std::map DictionaryDatum
 
 namespace nestio
 {
@@ -333,6 +334,12 @@ namespace nestio
   
   extern int getThreadHash();
   extern int getThreadHash(int rank, int thread_num);
+  
+  /*template <typename T>
+  void updateValue(const DictionaryDatum& d, const Names& n, T& v) 
+  {
+    v = d[n];
+  }*/
 };
 
 #endif

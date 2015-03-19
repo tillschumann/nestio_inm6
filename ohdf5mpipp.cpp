@@ -5,8 +5,8 @@
 #include <omp.h>
 
 
-OHDF5mpipp::OHDF5mpipp(std::string filename, int buf_size, nestio::LoggerType logger_type, nestio::SimSettings& simSettings)
-: buf_size(buf_size), RANK(2), simSettings(simSettings), logger_type(logger_type)
+OHDF5mpipp::OHDF5mpipp(std::string filename, int buf_size, nestio::LoggerType logger_type)
+: buf_size(buf_size), RANK(2), logger_type(logger_type)
 {
 	//Init HDF5 file
 	MPI_Comm_size(MPI_COMM_WORLD, &clientscount);
@@ -40,6 +40,13 @@ OHDF5mpipp::~OHDF5mpipp()
       std::cout << ".. hdf5 destructor" << std::endl;
       //Update spike datasets
       
+      
+      if (logger_type == nestio::Buffered || logger_type == nestio::Collective) {
+	  
+	  delete buffer_multi;
+	  delete buffer_spike;
+      }
+      
 	/* Close resources */
 	//if (memtype_multi!=NULL)
 	//  status = H5Tclose(memtype_multi);
@@ -52,18 +59,21 @@ OHDF5mpipp::~OHDF5mpipp()
 
 	//for (int i=0; i<multi_datasets.size(); i++)
 	//	status = H5Dclose (multi_datasets.at(i).dset_id);
-	
-	H5Pclose(spike_dataset.plist_id);
-	H5Pclose(multi_dataset.plist_id);
-	
-	status = H5Sclose (spike_dataset.filespace);
-	//status = H5Sclose (filespace);
-	
-	status = H5Dclose(spike_dataset.dset_id);
-	status = H5Dclose(multi_dataset.dset_id);
-	
-	
-    	status = H5Fclose (file);
+}
+
+void OHDF5mpipp::finalize()
+{
+  H5Pclose(spike_dataset.plist_id);
+  H5Pclose(multi_dataset.plist_id);
+  
+  status = H5Sclose (spike_dataset.filespace);
+  //status = H5Sclose (filespace);
+  
+  status = H5Dclose(spike_dataset.dset_id);
+  status = H5Dclose(multi_dataset.dset_id);
+  
+  
+  status = H5Fclose (file);
 }
 
 void OHDF5mpipp::setBufferSize(int s)
@@ -74,7 +84,7 @@ void OHDF5mpipp::setBufferSize(int s)
 int OHDF5mpipp::predictNewSpikeWindowSize(const double& t, HDF5DataSet &dataset) //missing: consider buffer!
 {
   if (t>0) {
-    int all_new_entries = (int)((double)dataset.entries / (t / (simSettings.T-t)));
+    int all_new_entries = (int)((double)dataset.entries / (t / (T_-t)));
     int space_needed = all_new_entries-(spike_dataset.window_size-spike_dataset.window_entries)+buf_size/dataset.sizeof_entry;
     if (space_needed>0)
       return space_needed;
@@ -88,7 +98,7 @@ int OHDF5mpipp::predictNewSpikeWindowSize(const double& t, HDF5DataSet &dataset)
 /**
 	extend the dataset sizes
 */
-void OHDF5mpipp::updateDatasetSizes(const double& t)
+void OHDF5mpipp::syncronize(const double& t)
 {
   updateSpikeDataSets(t);
   
@@ -151,9 +161,9 @@ void OHDF5mpipp::updateSpikeDataSets(const double& t)
       status = H5Sclose (spike_dataset.filespace);
       spike_dataset.filespace = H5Dget_space (spike_dataset.dset_id);
       spike_dataset.extended2next=true;
-      //#ifdef _DEBUG_MODE
+      #ifdef _DEBUG_MODE
       std::cout << "H5Dset_extent:" << spike_dataset.all_window_size << std::endl;
-      //#endif
+      #endif
     }
   }
     
@@ -295,7 +305,7 @@ void OHDF5mpipp::setNodeOffsetAndAllWindowSize(HDF5DataSet &dataset) {
   }
 }
 
-void OHDF5mpipp::createDatasets()
+void OHDF5mpipp::initialize(const double T)
 {
 #pragma omp single
   { 
@@ -343,7 +353,7 @@ void OHDF5mpipp::createDatasets()
     
     multi_dataset.window_size=0;
     for (int i=0; i<multi_datasets.size(); i++) {
-      multi_dataset.window_size += simSettings.T/multi_datasets[i].interval;
+      multi_dataset.window_size += T_/multi_datasets[i].interval;
     }
     
     //std::cout << "multi window size=" << multi_dataset.window_size  << std::endl;
@@ -437,9 +447,9 @@ void OHDF5mpipp::signup_multi(int id, int neuron_id, double sampling_interval, s
   oPrivateDataSet ownDataSet;
   ownDataSet.head.id = id;
   ownDataSet.neuron_id = neuron_id;
-  ownDataSet.head.size = 1000;      //TODO: simulationTime / sampling_interval
+  ownDataSet.head.size = (int)simulationTime/sampling_interval;      //TODO: simulationTime / sampling_interval
   //ownDataSet.buffer_size = buf;
-  ownDataSet.head.numberOfValues = 1000;  //TODO
+  ownDataSet.head.numberOfValues = valueNames.size();  //TODO
   ownDataSet.type = 1;
   ownDataSet.interval = sampling_interval;
   strcpy(ownDataSet.head.name, datasetname_ss.str().c_str());

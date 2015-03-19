@@ -118,17 +118,40 @@ class Sionlib_logger : public ILogger
 		SionBuffer* buffer_multi;
 		SionBuffer* buffer_spike;
 		
-		nestio::SimSettings simSettings;
-		
-		nestio::LoggerType loggerType;
+		struct Parameters_ {
+		    nestio::LoggerType loggerType_;
+		    double T_;
+		    double Tresolution_;
+		    
+		    bool overwrite_files_;
+		    std::string path_;
+		    std::string file_extension_;
+		    
+		    sion_int64 sion_buffer_size_;
+		    int logger_buffer_size_;
+
+		    /**
+		    * Set default parameter values.
+		    * @param Default file name extension, excluding ".".
+		    * @param Default value for withtime property
+		    * @param Default value for withgid property
+		    */
+		    Parameters_(const std::string&, const std::string&, nestio::LoggerType, int, sion_int64);
+
+		    //void get(const AsciiLogger2&, DictionaryDatum&) const;  //!< Store current values in dictionary
+		    //void set(const AsciiLogger2&, const Buffers_&, const DictionaryDatum&);  //!< Set values from dicitonary
+		  };
+		  
+		  Parameters_ P_;
 		
 	public:
-		Sionlib_logger() {};
-		Sionlib_logger(std::string,std::string, sion_int64, nestio::LoggerType, nestio::SimSettings&);
+		Sionlib_logger(): P_(".",".log", nestio::Standard, 100, 100) {};
+		Sionlib_logger(const std::string&, const std::string&, int, sion_int64, nestio::LoggerType);
 		~Sionlib_logger();
 		
-		void createDatasets();
-		void updateDatasetSizes(const double& t);
+		void syncronize(const double& t);
+		void initialize(const double T);
+		void finalize();
 		
 		void record_spike(int spikedetector_id, int neuron_id, int timestamp);
 		void record_multi(int multimeter_id, int neuron_id, int timestamp, const std::vector<double_t>& data);

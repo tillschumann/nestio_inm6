@@ -63,7 +63,7 @@ void Sionlib_logger::brecord_multi(int multimeter_id, int neuron_id, int timesta
 void Sionlib_logger::record_spike(int spikedetector_id, int neuron_id, int timestamp)
 {
   const int thread_num = omp_get_thread_num();
-    switch (loggerType) {
+    switch (P_.loggerType_) {
       case nestio::Standard:
 	srecord_spike(spikedetector_id, neuron_id, timestamp);
 	break;
@@ -80,7 +80,7 @@ void Sionlib_logger::record_spike(int spikedetector_id, int neuron_id, int times
 void Sionlib_logger::record_multi(int multimeter_id, int neuron_id, int timestamp, const std::vector<double_t>& data)
 {
   const int thread_num = omp_get_thread_num();
-    switch (loggerType) {
+    switch (P_.loggerType_) {
       case nestio::Standard:
 	srecord_multi(multimeter_id,neuron_id, timestamp, data);
 	break;
@@ -177,130 +177,132 @@ void Sionlib_logger::signup_multi(int id, int neuron_id, double sampling_interva
 /*
  *  Write header to sion files: Spikedetector and Multimeter file
  */
-void Sionlib_logger::createDatasets()
+void Sionlib_logger::initialize(const double T)
 {
+  #pragma omp parallel
+  {
   
-  const int thread_num = omp_get_thread_num();
-  #ifdef _DEBUG_MODE
-  std::cout << "createDatasets" << std::endl;
-  #endif
-  int numberOfRecords=-1;
-  int startOfBody;
-  //
-  // create Spike createDatasets
-  //
-  sion_fwrite(&header_spike[thread_num].NodesCount, sizeof(int), 1, spike_sid[thread_num]);
-  sion_fwrite(&simSettings.T, sizeof(double), 1, spike_sid[thread_num]);
-  sion_fwrite(&simSettings.Tresolution, sizeof(double), 1, spike_sid[thread_num]); // should be Tresolution
-  sion_fwrite(&numberOfRecords, sizeof(int), 1, spike_sid[thread_num]);
-  
-  // !!!!! caution
-  startOfBody = 3*sizeof(int)+2*sizeof(double)+header_spike[thread_num].NodesCount*(2*sizeof(int));
-  sion_fwrite(&startOfBody, sizeof(int), 1, spike_sid[thread_num]);
-  
-  /*for (int i=0; i<header_spike.NodesCount;i++) {
-    sion_fwrite(&header_spike.nodes[i].id, sizeof(int), 1, spike_sid);
-    sion_fwrite(&header_spike.nodes[i].neuron_id, sizeof(int), 1, spike_sid);
-  }*/
-  
-  //
-  // create Multidatasets
-  //
-  
-  sion_fwrite(&header_multi[thread_num].NodesCount, sizeof(int), 1, multi_sid[thread_num]);
-  sion_fwrite(&simSettings.T, sizeof(double), 1, multi_sid[thread_num]);
-  sion_fwrite(&simSettings.Tresolution, sizeof(double), 1, multi_sid[thread_num]); // should be Tresolution
-  sion_fwrite(&numberOfRecords, sizeof(int), 1, multi_sid[thread_num]);
-  
-  // !!!!! caution startOfBody has to be set correctly
-  startOfBody = 3*sizeof(int)+2*sizeof(double)+header_multi[thread_num].NodesCount*(3*sizeof(int)+sizeof(double));
-  for (int i=0; i<header_multi[thread_num].NodesCount;i++)
-    startOfBody += header_multi[thread_num].NodesCount*header_multi[thread_num].nodes[i].numberOfValues*sizeof(char)*20;
-  
-  sion_fwrite(&startOfBody, sizeof(int), 1, multi_sid[thread_num]);
-  
-  for (int i=0; i<header_multi[thread_num].NodesCount;i++) {
-    sion_fwrite(&header_multi[thread_num].nodes[i].id, sizeof(int), 1, multi_sid[thread_num]);
-    sion_fwrite(&header_multi[thread_num].nodes[i].neuron_id, sizeof(int), 1, multi_sid[thread_num]);
-    sion_fwrite(&header_multi[thread_num].nodes[i].interval, sizeof(double), 1, multi_sid[thread_num]);
-    sion_fwrite(&header_multi[thread_num].nodes[i].numberOfValues, sizeof(int), 1, multi_sid[thread_num]);
-    for (int j=0; j<header_multi[thread_num].nodes[i].numberOfValues; j++) {
-      sion_fwrite(header_multi[thread_num].nodes[i].valueNames[j], sizeof(char), 20, multi_sid[thread_num]);
+    int thread_num = omp_get_thread_num();
+    
+    
+    /* SION parameters */
+    int numFiles, rank, num_procs;
+    MPI_Comm lComm;
+    //sion_int64 left, bwrote;
+    sion_int32 fsblksize;
+    char *newfname=NULL;
+    /* MPI */
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
+    
+    /* open parameters */
+    numFiles = 1; //internal sion can write to more than one file -> filesystem/performance
+    fsblksize = -1;
+    
+    
+    std::string sfn;
+    std::string mfn;
+    
+    char spike_fname[256],multi_fname[256];
+    strcpy(spike_fname, sfn.c_str());
+    strcpy(multi_fname, mfn.c_str());
+    
+    /* create a new file */
+    spike_sid[thread_num] = sion_paropen_ompi(spike_fname, "bw", &numFiles,
+    MPI_COMM_WORLD, &lComm,
+    &P_.sion_buffer_size_, &fsblksize,
+    &rank,
+    NULL, &newfname);
+    
+    /* create a new file */
+    multi_sid[thread_num] = sion_paropen_ompi(multi_fname, "bw", &numFiles,
+    MPI_COMM_WORLD, &lComm,
+    &P_.sion_buffer_size_, &fsblksize,
+    &rank,
+    NULL, &newfname);
+
+    #ifdef _DEBUG_MODE
+    std::cout << "createDatasets" << std::endl;
+    #endif
+    int numberOfRecords=-1;
+    int startOfBody;
+    //
+    // create Spike createDatasets
+    //
+    sion_fwrite(&header_spike[thread_num].NodesCount, sizeof(int), 1, spike_sid[thread_num]);
+    sion_fwrite(&P_.T_, sizeof(double), 1, spike_sid[thread_num]);
+    sion_fwrite(&P_.Tresolution_, sizeof(double), 1, spike_sid[thread_num]); // should be Tresolution //TODO
+    sion_fwrite(&numberOfRecords, sizeof(int), 1, spike_sid[thread_num]);
+
+    // !!!!! caution
+    startOfBody = 3*sizeof(int)+2*sizeof(double)+header_spike[thread_num].NodesCount*(2*sizeof(int));
+    sion_fwrite(&startOfBody, sizeof(int), 1, spike_sid[thread_num]);
+
+    /*for (int i=0; i<header_spike.NodesCount;i++) {
+      sion_fwrite(&header_spike.nodes[i].id, sizeof(int), 1, spike_sid);
+      sion_fwrite(&header_spike.nodes[i].neuron_id, sizeof(int), 1, spike_sid);
+    }*/
+
+    //
+    // create Multidatasets
+    //
+
+    sion_fwrite(&header_multi[thread_num].NodesCount, sizeof(int), 1, multi_sid[thread_num]);
+    sion_fwrite(&P_.T_, sizeof(double), 1, multi_sid[thread_num]);
+    sion_fwrite(&P_.Tresolution_, sizeof(double), 1, multi_sid[thread_num]); // should be Tresolution
+    sion_fwrite(&numberOfRecords, sizeof(int), 1, multi_sid[thread_num]);
+
+    // !!!!! caution startOfBody has to be set correctly
+    startOfBody = 3*sizeof(int)+2*sizeof(double)+header_multi[thread_num].NodesCount*(3*sizeof(int)+sizeof(double));
+    for (int i=0; i<header_multi[thread_num].NodesCount;i++)
+      startOfBody += header_multi[thread_num].NodesCount*header_multi[thread_num].nodes[i].numberOfValues*sizeof(char)*20;
+
+    sion_fwrite(&startOfBody, sizeof(int), 1, multi_sid[thread_num]);
+
+    for (int i=0; i<header_multi[thread_num].NodesCount;i++) {
+      sion_fwrite(&header_multi[thread_num].nodes[i].id, sizeof(int), 1, multi_sid[thread_num]);
+      sion_fwrite(&header_multi[thread_num].nodes[i].neuron_id, sizeof(int), 1, multi_sid[thread_num]);
+      sion_fwrite(&header_multi[thread_num].nodes[i].interval, sizeof(double), 1, multi_sid[thread_num]);
+      sion_fwrite(&header_multi[thread_num].nodes[i].numberOfValues, sizeof(int), 1, multi_sid[thread_num]);
+      for (int j=0; j<header_multi[thread_num].nodes[i].numberOfValues; j++) {
+	sion_fwrite(header_multi[thread_num].nodes[i].valueNames[j], sizeof(char), 20, multi_sid[thread_num]);
+      }
+	
     }
-      
   }
 }
 
 /*
  * Init sion file
  */
-Sionlib_logger::Sionlib_logger(std::string sfn, std::string mfn, sion_int64 buf_size, nestio::LoggerType loggerType, nestio::SimSettings &simSettings)
-:simSettings(simSettings), loggerType(loggerType)
-{
-	//std::cout << "create logger in thread "<< omp_get_thread_num() << std::endl;
-	int num_threads=omp_get_max_threads();
-    
-	header_multi.resize(num_threads);
-	header_spike.resize(num_threads);
-	
-	for (int i=0; i<num_threads; i++) {
-	  header_multi[i].NodesCount=0;
-	  header_spike[i].NodesCount=0;
-	  
-	  header_multi[i].numberOfWrittenData=0;
-	  header_spike[i].numberOfWrittenData=0;
-	}
+Sionlib_logger::Sionlib_logger(const std::string& path, const std::string& file_extension,int logger_buf_size, sion_int64 sion_buf_size, nestio::LoggerType loggerType)
+:P_(path, file_extension, loggerType, logger_buf_size, sion_buf_size)
+{    
+    //std::cout << "create logger in thread "<< omp_get_thread_num() << std::endl;
+    int num_threads=omp_get_max_threads();
 
-	spike_sid.reserve(num_threads);
-	multi_sid.reserve(num_threads);
-	
-	#pragma omp parallel
-	{
-	
-	  int thread_num = omp_get_thread_num();
-	  
-	  
-	  /* SION parameters */
-	  int numFiles, rank, num_procs;
-	  MPI_Comm lComm;
-	  //sion_int64 left, bwrote;
-	  sion_int32 fsblksize;
-	  char *newfname=NULL;
-	  /* MPI */
-	  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-	  MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
-	  
-	  /* open parameters */
-	  numFiles = 1; //internal sion can write to more than one file -> filesystem/performance
-	  fsblksize = -1;
-	  
-	  char spike_fname[256],multi_fname[256];
-	  strcpy(spike_fname, sfn.c_str());
-	  strcpy(multi_fname, mfn.c_str());
-	  
-	  /* create a new file */
-	  spike_sid[thread_num] = sion_paropen_ompi(spike_fname, "bw", &numFiles,
-	  MPI_COMM_WORLD, &lComm,
-	  &buf_size, &fsblksize,
-	  &rank,
-	  NULL, &newfname);
-	  
-	  /* create a new file */
-	  multi_sid[thread_num] = sion_paropen_ompi(multi_fname, "bw", &numFiles,
-	  MPI_COMM_WORLD, &lComm,
-	  &buf_size, &fsblksize,
-	  &rank,
-	  NULL, &newfname);
-	}
-	
-	if (loggerType == nestio::Buffered || loggerType == nestio::Collective) {
-	  buffer_multi = new SionBuffer[num_threads];
-	  buffer_spike = new SionBuffer[num_threads];
-	  for (int i=0; i<num_threads;i++) {
-	    buffer_multi[i].extend(buf_size);
-	    buffer_spike[i].extend(buf_size);
-	  }
-	}
+    header_multi.resize(num_threads);
+    header_spike.resize(num_threads);
+    
+    for (int i=0; i<num_threads; i++) {
+      header_multi[i].NodesCount=0;
+      header_spike[i].NodesCount=0;
+      
+      header_multi[i].numberOfWrittenData=0;
+      header_spike[i].numberOfWrittenData=0;
+    }
+
+    spike_sid.reserve(num_threads);
+    multi_sid.reserve(num_threads);
+    
+    if (P_.loggerType_ == nestio::Buffered || P_.loggerType_ == nestio::Collective) {
+    buffer_multi = new SionBuffer[num_threads];
+    buffer_spike = new SionBuffer[num_threads];
+    for (int i=0; i<num_threads;i++) {
+      buffer_multi[i].extend(P_.logger_buffer_size_);
+      buffer_spike[i].extend(P_.logger_buffer_size_);
+    }
+  }
 }
 
 
@@ -309,11 +311,26 @@ Sionlib_logger::Sionlib_logger(std::string sfn, std::string mfn, sion_int64 buf_
  */
 Sionlib_logger::~Sionlib_logger()
 {
+  if (P_.loggerType_ == nestio::Buffered || P_.loggerType_ == nestio::Collective) {
+    delete buffer_multi;
+    delete buffer_spike;
+  }
+}
+
+
+void Sionlib_logger::finalize()
+{
   #pragma omp parallel
   {
     const int thread_num = omp_get_thread_num();
     
-    if (loggerType == nestio::Collective || loggerType == nestio::Buffered) {
+    if (P_.loggerType_ == nestio::Collective) {
+      sion_coll_fwrite(buffer_spike[thread_num].read(), buffer_spike[thread_num].getSize(), 1, spike_sid[thread_num]);
+      buffer_spike[thread_num].clear();
+      sion_coll_fwrite(buffer_multi[thread_num].read(), buffer_multi[thread_num].getSize(), 1, multi_sid[thread_num]);
+      buffer_multi[thread_num].clear();
+    }
+    else if (P_.loggerType_ == nestio::Buffered) {
       //write values from buffer to file 
       if (buffer_spike[thread_num].getSize()>0) {   
 	sion_fwrite(buffer_spike[thread_num].read(), buffer_spike[thread_num].getSize(), 1, spike_sid[thread_num]);
@@ -345,19 +362,19 @@ Sionlib_logger::~Sionlib_logger()
  * called during the sync step
  * could be used to call sion_ensure_free_space
  */
-void Sionlib_logger::updateDatasetSizes(const double& t)
+void Sionlib_logger::syncronize(const double& t)
 {
-  if (loggerType == nestio::Collective) {
+  if (P_.loggerType_ == nestio::Collective) {
     const int thread_num = omp_get_thread_num();
 
-    if (buffer_spike[thread_num].getSize()>0) {
-      sion_fwrite(buffer_spike[thread_num].read(), buffer_spike[thread_num].getSize(), 1, spike_sid[thread_num]);
-      buffer_spike[thread_num].clear();
-    }
-    if (buffer_multi[thread_num].getSize()>0) {
-      sion_fwrite(buffer_multi[thread_num].read(), buffer_multi[thread_num].getSize(), 1, multi_sid[thread_num]);
-      buffer_multi[thread_num].clear();
-    }
+    //if (buffer_spike[thread_num].getSize()>0) {
+    sion_coll_fwrite(buffer_spike[thread_num].read(), buffer_spike[thread_num].getSize(), 1, spike_sid[thread_num]);
+    buffer_spike[thread_num].clear();
+    //}
+    //if (buffer_multi[thread_num].getSize()>0) {
+    sion_coll_fwrite(buffer_multi[thread_num].read(), buffer_multi[thread_num].getSize(), 1, multi_sid[thread_num]);
+    buffer_multi[thread_num].clear();
+    //}
     
   }
 }
@@ -367,3 +384,7 @@ std::ostream& operator << (std::ostream &o, const Sionlib_logger &l)
   o << "Sionlib_logger";
   return o;
 }
+
+Sionlib_logger::Parameters_::Parameters_(const std::string& path, const std::string& file_extension, nestio::LoggerType loggerType, int logger_buffer_size, sion_int64 sion_buffer_size)
+: loggerType_(loggerType), path_(path), file_extension_(file_extension), logger_buffer_size_(logger_buffer_size), sion_buffer_size_(sion_buffer_size)
+{}

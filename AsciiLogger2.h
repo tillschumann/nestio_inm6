@@ -73,8 +73,8 @@ namespace nest
 		    */
 		    Parameters_(const std::string&, const std::string&, bool, bool, bool);
 
-		    //void get(const RecordingDevice&, DictionaryDatum&) const;  //!< Store current values in dictionary
-		    //void set(const RecordingDevice&, const Buffers_&, const DictionaryDatum&);  //!< Set values from dicitonary
+		    //void get(const AsciiLogger2&, DictionaryDatum&) const;  //!< Store current values in dictionary
+		    //void set(const AsciiLogger2&, const Buffers_&, const DictionaryDatum&);  //!< Set values from dicitonary
 		  };
 		  
 		  Parameters_ P_;

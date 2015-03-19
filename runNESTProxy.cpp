@@ -59,19 +59,19 @@ void run(nestio::Configuration &conf, nestio::SimSettings &simSettings,int argc,
     
     switch (conf.logger) {
       case nestio::SIONLIB:
-	sfn << output_dir_file.str() << "/data.spike_sion";
-	mfn << output_dir_file.str() << "/data.multi_sion"; 
-	logger = new Sionlib_logger(sfn.str(), mfn.str(), conf.bufferSize, nestio::Standard, simSettings);
+	//sfn << output_dir_file.str() << "/data.spike_sion";
+	//mfn << output_dir_file.str() << "/data.multi_sion"; 
+	logger = new Sionlib_logger(output_dir_file.str(), "sion", conf.bufferSize, conf.bufferSize, nestio::Standard);
 	break;
       case nestio::SIONLIB_BUFFERED:
-	sfn << output_dir_file.str() << "/data.spike_sion";
-	mfn << output_dir_file.str() << "/data.multi_sion";
-	logger = new Sionlib_logger(sfn.str(), mfn.str(), conf.bufferSize, nestio::Buffered, simSettings);
+	//sfn << output_dir_file.str() << "/data.spike_sion";
+	//mfn << output_dir_file.str() << "/data.multi_sion";
+	logger = new Sionlib_logger(output_dir_file.str(), "sion", conf.bufferSize, conf.bufferSize, nestio::Buffered);
 	break;
       case nestio::SIONLIB_COLLECTIVE:
-	sfn << output_dir_file.str() << "/data.spike_sion";
-	mfn << output_dir_file.str() << "/data.multi_sion";
-	logger = new Sionlib_logger(sfn.str(), mfn.str(), conf.bufferSize, nestio::Collective, simSettings);
+	//sfn << output_dir_file.str() << "/data.spike_sion";
+	//mfn << output_dir_file.str() << "/data.multi_sion";
+	logger = new Sionlib_logger(output_dir_file.str(), "sion", conf.bufferSize, conf.bufferSize, nestio::Collective);
 	break;
       case nestio::HDF5:
 	fns << output_dir_file.str() << "/data.hdf5";
@@ -79,15 +79,15 @@ void run(nestio::Configuration &conf, nestio::SimSettings &simSettings,int argc,
 	break;
       case nestio::oHDF5:
 	fns << output_dir_file.str() << "/data_o.hdf5";
-	logger = new OHDF5mpipp(fns.str(), conf.bufferSize, nestio::Standard, simSettings);
+	logger = new OHDF5mpipp(fns.str(), conf.bufferSize, nestio::Standard);
 	break;
       case nestio::oHDF5_BUFFERED:
 	fns << output_dir_file.str() << "/data_o.hdf5";
-	logger = new OHDF5mpipp(fns.str(), conf.bufferSize, nestio::Buffered, simSettings);
+	logger = new OHDF5mpipp(fns.str(), conf.bufferSize, nestio::Buffered);
 	break;
       case nestio::oHDF5_COLLECTIVE:
 	fns << output_dir_file.str() << "/data_o.hdf5";
-	logger = new OHDF5mpipp(fns.str(), conf.bufferSize, nestio::Collective, simSettings);
+	logger = new OHDF5mpipp(fns.str(), conf.bufferSize, nestio::Collective);
 	break;
       case nestio::ASCII:
 	sfn << output_dir_file.str();// << "/data.spike_ascii";

@@ -162,8 +162,7 @@ class OHDF5mpipp : public ILogger
 		oHDF5Buffer* buffer_multi;
 		oHDF5Buffer* buffer_spike;
 		
-		
-		nestio::SimSettings simSettings;
+		double T_;
 		
 		std::vector<int> multi_ns;
 		std::vector<int> spike_ns;
@@ -190,7 +189,7 @@ class OHDF5mpipp : public ILogger
 		
 	public:
 		OHDF5mpipp() {};
-		OHDF5mpipp(std::string, int, nestio::LoggerType logger_type, nestio::SimSettings&);
+		OHDF5mpipp(std::string, int, nestio::LoggerType logger_type);
 		~OHDF5mpipp();
 		//void write(int* data);
 		//void newDataSet(std::string, const int, const int);
@@ -214,7 +213,9 @@ class OHDF5mpipp : public ILogger
 		
 		void storeContinuousAnalogSignal(HDF5DataSet &dataset, char* values, int n);
 		
-		void createDatasets();
+		void syncronize(const double& t);
+		void initialize(const double T);
+		void finalize();
 };
 
 
