@@ -189,7 +189,7 @@ int main(int argc, char *argv[])
 	simSettings.Tresolution=0.1;
 	
 	nestio::Configuration conf;
-	conf.logger = nestio::ASCII;
+	conf.logger = nestio::HDF5;
 	conf.bufferSize = 2400;
 	conf.numberOfThreads=new nestio::FixIntValue(numberOfThreads); //must not be changed
 	conf.numberOfSpikeDetectorsPerThread=new nestio::FixIntValue(2);
@@ -202,11 +202,11 @@ int main(int argc, char *argv[])
 	conf.numberOfValuesWrittenByMeter = new nestio::FixIntValue(1);
 	
 	
-	std::vector<nestio::Multimeter_Config> m_list_1_1(1);
-	m_list_1_1.at(0).numberOfValuesWritten=new nestio::FixIntValue(1);
-	m_list_1_1.at(0	).samplingIntervals=new nestio::FixDoubleValue(0.05);
-	std::pair<int,std::vector<nestio::Multimeter_Config>> pairvalue(nestio::getThreadHash(0,0),m_list_1_1);
-	conf.multimeter_configs.insert(pairvalue);
+	//std::vector<nestio::Multimeter_Config> m_list_1_1(1);
+	//m_list_1_1.at(0).numberOfValuesWritten=new nestio::FixIntValue(1);
+	//m_list_1_1.at(0	).samplingIntervals=new nestio::FixDoubleValue(0.05);
+	//std::pair<int,std::vector<nestio::Multimeter_Config>> pairvalue(nestio::getThreadHash(0,0),m_list_1_1);
+	//conf.multimeter_configs.insert(pairvalue);
 
 	run(conf,simSettings,argc,argv);
 	#ifdef _DEBUG_MODE

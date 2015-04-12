@@ -99,7 +99,7 @@ void Sionlib_logger::srecord_spike(int spikedetector_id, int neuron_id, int time
 {
   const int thread_num = omp_get_thread_num();
 
-  sion_ensure_free_space(spike_sid[thread_num], 3*sizeof(int));
+  //sion_ensure_free_space(spike_sid[thread_num], 3*sizeof(int));
   sion_fwrite(&spikedetector_id, sizeof(int), 1, spike_sid[thread_num]);
   sion_fwrite(&neuron_id, sizeof(int), 1, spike_sid[thread_num]);
   sion_fwrite(&timestamp, sizeof(int), 1, spike_sid[thread_num]);
@@ -111,7 +111,7 @@ void Sionlib_logger::srecord_multi(int multimeter_id, int neuron_id, int timesta
 
   int numberOfValues=data.size();
   
-  sion_ensure_free_space(multi_sid[thread_num], 4*sizeof(int)+(numberOfValues)*sizeof(double));
+  //sion_ensure_free_space(multi_sid[thread_num], 4*sizeof(int)+(numberOfValues)*sizeof(double));
   sion_fwrite(&multimeter_id, sizeof(int), 1, multi_sid[thread_num]);
   sion_fwrite(&neuron_id, sizeof(int), 1, multi_sid[thread_num]);
   sion_fwrite(&timestamp, sizeof(int), 1, multi_sid[thread_num]);
@@ -146,7 +146,7 @@ void Sionlib_logger::signup_spike(int id, int neuron_id, int expectedSpikeCount)
 /*
  * Collecting header informations for Multimeters
  */
-void Sionlib_logger::signup_multi(int id, int neuron_id, double sampling_interval, std::vector<Name> valueNames, double simulationTime)
+void Sionlib_logger::signup_multi(int id, int neuron_id, double sampling_interval, std::vector<Name> valueNames)
 {
   const int thread_num = omp_get_thread_num();
 #pragma omp critical
@@ -200,12 +200,16 @@ void Sionlib_logger::initialize(const double T)
     fsblksize = -1;
     
     
-    std::string sfn;
-    std::string mfn;
+    std::stringstream sfn, mfn;
+    sfn << P_.path_ << "/" << "spike" << "." << P_.file_extension_;
+    mfn << P_.path_ << "/" << "multi" << "." << P_.file_extension_;
+    
+    std::cout << "filepath spike: " << sfn.str() << std::endl;
+    std::cout << "filepath multi: " << mfn.str() << std::endl;
     
     char spike_fname[256],multi_fname[256];
-    strcpy(spike_fname, sfn.c_str());
-    strcpy(multi_fname, mfn.c_str());
+    strcpy(spike_fname, sfn.str().c_str());
+    strcpy(multi_fname, mfn.str().c_str());
     
     /* create a new file */
     spike_sid[thread_num] = sion_paropen_ompi(spike_fname, "bw", &numFiles,
@@ -229,14 +233,27 @@ void Sionlib_logger::initialize(const double T)
     //
     // create Spike createDatasets
     //
-    sion_fwrite(&header_spike[thread_num].NodesCount, sizeof(int), 1, spike_sid[thread_num]);
-    sion_fwrite(&P_.T_, sizeof(double), 1, spike_sid[thread_num]);
-    sion_fwrite(&P_.Tresolution_, sizeof(double), 1, spike_sid[thread_num]); // should be Tresolution //TODO
-    sion_fwrite(&numberOfRecords, sizeof(int), 1, spike_sid[thread_num]);
+    
+    if (P_.loggerType_ == nestio::Collective) {
+      sion_coll_fwrite(&header_spike[thread_num].NodesCount, sizeof(int), 1, spike_sid[thread_num]);
+      sion_coll_fwrite(&P_.T_, sizeof(double), 1, spike_sid[thread_num]);
+      sion_coll_fwrite(&P_.Tresolution_, sizeof(double), 1, spike_sid[thread_num]); // should be Tresolution //TODO
+      sion_coll_fwrite(&numberOfRecords, sizeof(int), 1, spike_sid[thread_num]);
 
-    // !!!!! caution
-    startOfBody = 3*sizeof(int)+2*sizeof(double)+header_spike[thread_num].NodesCount*(2*sizeof(int));
-    sion_fwrite(&startOfBody, sizeof(int), 1, spike_sid[thread_num]);
+      // !!!!! caution
+      startOfBody = 3*sizeof(int)+2*sizeof(double)+header_spike[thread_num].NodesCount*(2*sizeof(int));
+      sion_coll_fwrite(&startOfBody, sizeof(int), 1, spike_sid[thread_num]);
+    }
+    else {
+      sion_fwrite(&header_spike[thread_num].NodesCount, sizeof(int), 1, spike_sid[thread_num]);
+      sion_fwrite(&P_.T_, sizeof(double), 1, spike_sid[thread_num]);
+      sion_fwrite(&P_.Tresolution_, sizeof(double), 1, spike_sid[thread_num]); // should be Tresolution //TODO
+      sion_fwrite(&numberOfRecords, sizeof(int), 1, spike_sid[thread_num]);
+
+      // !!!!! caution
+      startOfBody = 3*sizeof(int)+2*sizeof(double)+header_spike[thread_num].NodesCount*(2*sizeof(int));
+      sion_fwrite(&startOfBody, sizeof(int), 1, spike_sid[thread_num]);
+    }
 
     /*for (int i=0; i<header_spike.NodesCount;i++) {
       sion_fwrite(&header_spike.nodes[i].id, sizeof(int), 1, spike_sid);
@@ -246,28 +263,85 @@ void Sionlib_logger::initialize(const double T)
     //
     // create Multidatasets
     //
+    
+    if (P_.loggerType_ == nestio::Collective) {
+      sion_coll_fwrite(&header_multi[thread_num].NodesCount, sizeof(int), 1, multi_sid[thread_num]);
+      sion_coll_fwrite(&P_.T_, sizeof(double), 1, multi_sid[thread_num]);
+      sion_coll_fwrite(&P_.Tresolution_, sizeof(double), 1, multi_sid[thread_num]); // should be Tresolution
+      sion_coll_fwrite(&numberOfRecords, sizeof(int), 1, multi_sid[thread_num]);
 
-    sion_fwrite(&header_multi[thread_num].NodesCount, sizeof(int), 1, multi_sid[thread_num]);
-    sion_fwrite(&P_.T_, sizeof(double), 1, multi_sid[thread_num]);
-    sion_fwrite(&P_.Tresolution_, sizeof(double), 1, multi_sid[thread_num]); // should be Tresolution
-    sion_fwrite(&numberOfRecords, sizeof(int), 1, multi_sid[thread_num]);
+      // !!!!! caution startOfBody has to be set correctly
+      startOfBody = 3*sizeof(int)+2*sizeof(double)+header_multi[thread_num].NodesCount*(3*sizeof(int)+sizeof(double));
+      for (int i=0; i<header_multi[thread_num].NodesCount;i++)
+	startOfBody += header_multi[thread_num].NodesCount*header_multi[thread_num].nodes[i].numberOfValues*sizeof(char)*20;
 
-    // !!!!! caution startOfBody has to be set correctly
-    startOfBody = 3*sizeof(int)+2*sizeof(double)+header_multi[thread_num].NodesCount*(3*sizeof(int)+sizeof(double));
-    for (int i=0; i<header_multi[thread_num].NodesCount;i++)
-      startOfBody += header_multi[thread_num].NodesCount*header_multi[thread_num].nodes[i].numberOfValues*sizeof(char)*20;
+      sion_coll_fwrite(&startOfBody, sizeof(int), 1, multi_sid[thread_num]);
 
-    sion_fwrite(&startOfBody, sizeof(int), 1, multi_sid[thread_num]);
-
-    for (int i=0; i<header_multi[thread_num].NodesCount;i++) {
-      sion_fwrite(&header_multi[thread_num].nodes[i].id, sizeof(int), 1, multi_sid[thread_num]);
-      sion_fwrite(&header_multi[thread_num].nodes[i].neuron_id, sizeof(int), 1, multi_sid[thread_num]);
-      sion_fwrite(&header_multi[thread_num].nodes[i].interval, sizeof(double), 1, multi_sid[thread_num]);
-      sion_fwrite(&header_multi[thread_num].nodes[i].numberOfValues, sizeof(int), 1, multi_sid[thread_num]);
-      for (int j=0; j<header_multi[thread_num].nodes[i].numberOfValues; j++) {
-	sion_fwrite(header_multi[thread_num].nodes[i].valueNames[j], sizeof(char), 20, multi_sid[thread_num]);
-      }
+      SionBuffer buffer(header_multi[thread_num].NodesCount*(3*sizeof(int)+sizeof(double)));
+      //buffer << (int)1;
+      for (int i=0; i<header_multi[thread_num].NodesCount;i++) {
+	SionFileHeaderNode& node = header_multi[thread_num].nodes[i];
+	buffer.getEnoughFreeSpace(3*sizeof(int)+sizeof(double)+sizeof(char)*node.numberOfValues);
+	//sion_fwrite(&header_multi[thread_num].nodes[i].id, sizeof(int), 1, multi_sid[thread_num]);
+	//sion_fwrite(&header_multi[thread_num].nodes[i].neuron_id, sizeof(int), 1, multi_sid[thread_num]);
+	//sion_fwrite(&header_multi[thread_num].nodes[i].interval, sizeof(double), 1, multi_sid[thread_num]);
+	//sion_fwrite(&header_multi[thread_num].nodes[i].numberOfValues, sizeof(int), 1, multi_sid[thread_num]);
+	//for (int j=0; j<header_multi[thread_num].nodes[i].numberOfValues; j++) {
+	// sion_fwrite(header_multi[thread_num].nodes[i].valueNames[j], sizeof(char), 20, multi_sid[thread_num]);
+	//}
 	
+	buffer << node.id;
+	buffer << node.neuron_id;
+	buffer << node.interval;
+	buffer << node.numberOfValues;
+	for (int j=0; j<node.numberOfValues; j++)
+	  buffer << node.valueNames[j];
+      }
+      //std::cout << "tricky size=" << buffer.getSize() << std::endl;
+      if (buffer.getSize()>0)
+	sion_coll_fwrite(buffer.read(), buffer.getSize(), 1, multi_sid[thread_num]);
+      else
+	sion_coll_fwrite(buffer.read(), 1, 0, multi_sid[thread_num]);
+    //std::cout << "tricky done" << std::endl;
+    }
+    else {
+      sion_fwrite(&header_multi[thread_num].NodesCount, sizeof(int), 1, multi_sid[thread_num]);
+      sion_fwrite(&P_.T_, sizeof(double), 1, multi_sid[thread_num]);
+      sion_fwrite(&P_.Tresolution_, sizeof(double), 1, multi_sid[thread_num]); // should be Tresolution
+      sion_fwrite(&numberOfRecords, sizeof(int), 1, multi_sid[thread_num]);
+
+      // !!!!! caution startOfBody has to be set correctly
+      startOfBody = 3*sizeof(int)+2*sizeof(double)+header_multi[thread_num].NodesCount*(3*sizeof(int)+sizeof(double));
+      for (int i=0; i<header_multi[thread_num].NodesCount;i++)
+	startOfBody += header_multi[thread_num].NodesCount*header_multi[thread_num].nodes[i].numberOfValues*sizeof(char)*20;
+
+      sion_fwrite(&startOfBody, sizeof(int), 1, multi_sid[thread_num]);
+
+      SionBuffer buffer(header_multi[thread_num].NodesCount*(3*sizeof(int)+sizeof(double)));
+      //buffer << (int)1;
+      for (int i=0; i<header_multi[thread_num].NodesCount;i++) {
+	SionFileHeaderNode& node = header_multi[thread_num].nodes[i];
+	buffer.getEnoughFreeSpace(3*sizeof(int)+sizeof(double)+sizeof(char)*node.numberOfValues);
+	//sion_fwrite(&header_multi[thread_num].nodes[i].id, sizeof(int), 1, multi_sid[thread_num]);
+	//sion_fwrite(&header_multi[thread_num].nodes[i].neuron_id, sizeof(int), 1, multi_sid[thread_num]);
+	//sion_fwrite(&header_multi[thread_num].nodes[i].interval, sizeof(double), 1, multi_sid[thread_num]);
+	//sion_fwrite(&header_multi[thread_num].nodes[i].numberOfValues, sizeof(int), 1, multi_sid[thread_num]);
+	//for (int j=0; j<header_multi[thread_num].nodes[i].numberOfValues; j++) {
+	// sion_fwrite(header_multi[thread_num].nodes[i].valueNames[j], sizeof(char), 20, multi_sid[thread_num]);
+	//}
+	
+	buffer << node.id;
+	buffer << node.neuron_id;
+	buffer << node.interval;
+	buffer << node.numberOfValues;
+	for (int j=0; j<node.numberOfValues; j++)
+	  buffer << node.valueNames[j];
+      }
+      //std::cout << "tricky size=" << buffer.getSize() << std::endl;
+      if (buffer.getSize()>0)
+	sion_fwrite(buffer.read(), buffer.getSize(), 1, multi_sid[thread_num]);
+      else
+	sion_fwrite(buffer.read(), 1, 0, multi_sid[thread_num]);
     }
   }
 }
@@ -312,8 +386,8 @@ Sionlib_logger::Sionlib_logger(const std::string& path, const std::string& file_
 Sionlib_logger::~Sionlib_logger()
 {
   if (P_.loggerType_ == nestio::Buffered || P_.loggerType_ == nestio::Collective) {
-    delete buffer_multi;
-    delete buffer_spike;
+    delete [] buffer_multi;
+    delete [] buffer_spike;
   }
 }
 
@@ -325,9 +399,9 @@ void Sionlib_logger::finalize()
     const int thread_num = omp_get_thread_num();
     
     if (P_.loggerType_ == nestio::Collective) {
-      sion_coll_fwrite(buffer_spike[thread_num].read(), buffer_spike[thread_num].getSize(), 1, spike_sid[thread_num]);
+      //sion_coll_fwrite(buffer_spike[thread_num].read(), 1, buffer_spike[thread_num].getSize(), spike_sid[thread_num]);
       buffer_spike[thread_num].clear();
-      sion_coll_fwrite(buffer_multi[thread_num].read(), buffer_multi[thread_num].getSize(), 1, multi_sid[thread_num]);
+      //sion_coll_fwrite(buffer_multi[thread_num].read(), 1, buffer_multi[thread_num].getSize(), multi_sid[thread_num]);
       buffer_multi[thread_num].clear();
     }
     else if (P_.loggerType_ == nestio::Buffered) {
@@ -348,9 +422,14 @@ void Sionlib_logger::finalize()
     std::cout << "spike numberOfWrittenData=" << header_spike[thread_num].numberOfWrittenData << std::endl;
     std::cout << "multi numberOfWrittenData=" << header_multi[thread_num].numberOfWrittenData << std::endl;
     #endif
-    
-    sion_fwrite(&header_spike[thread_num].numberOfWrittenData,sizeof(int),1,spike_sid[thread_num]);
-    sion_fwrite(&header_multi[thread_num].numberOfWrittenData,sizeof(int),1,multi_sid[thread_num]);
+    if (P_.loggerType_ == nestio::Collective) {
+      sion_coll_fwrite(&header_spike[thread_num].numberOfWrittenData,sizeof(int),1,spike_sid[thread_num]);
+      sion_coll_fwrite(&header_multi[thread_num].numberOfWrittenData,sizeof(int),1,multi_sid[thread_num]);
+    }
+    else {
+      sion_fwrite(&header_spike[thread_num].numberOfWrittenData,sizeof(int),1,spike_sid[thread_num]);
+      sion_fwrite(&header_multi[thread_num].numberOfWrittenData,sizeof(int),1,multi_sid[thread_num]);
+    }
     
     sion_parclose_ompi(multi_sid[thread_num]);
     sion_parclose_ompi(spike_sid[thread_num]);
@@ -364,15 +443,19 @@ void Sionlib_logger::finalize()
  */
 void Sionlib_logger::syncronize(const double& t)
 {
+  
+  std::cout << "syncronize t=" << t << std::endl;
   if (P_.loggerType_ == nestio::Collective) {
     const int thread_num = omp_get_thread_num();
 
     //if (buffer_spike[thread_num].getSize()>0) {
-    sion_coll_fwrite(buffer_spike[thread_num].read(), buffer_spike[thread_num].getSize(), 1, spike_sid[thread_num]);
+    //std::cout << "spike coll_write buffer_size=" << buffer_spike[thread_num].getSize() << std::endl;
+    sion_coll_fwrite(buffer_spike[thread_num].read(), 1, buffer_spike[thread_num].getSize(), spike_sid[thread_num]);
     buffer_spike[thread_num].clear();
     //}
     //if (buffer_multi[thread_num].getSize()>0) {
-    sion_coll_fwrite(buffer_multi[thread_num].read(), buffer_multi[thread_num].getSize(), 1, multi_sid[thread_num]);
+    //std::cout << "multi coll_write buffer_size=" << buffer_multi[thread_num].getSize() << std::endl;
+    sion_coll_fwrite(buffer_multi[thread_num].read(), 1, buffer_multi[thread_num].getSize(), multi_sid[thread_num]);
     buffer_multi[thread_num].clear();
     //}
     

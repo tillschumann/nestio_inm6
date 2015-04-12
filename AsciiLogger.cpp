@@ -52,7 +52,7 @@ void AsciiLogger::signup_spike(int id, int neuron_id, int expectedSpikeCount)
   }
 }
 
-void AsciiLogger::signup_multi(int id, int neuron_id, double sampling_interval, std::vector<Name> valueNames, double simulationTime)
+void AsciiLogger::signup_multi(int id, int neuron_id, double sampling_interval, std::vector<Name> valueNames)
 {
   #pragma omp critical
   {

@@ -32,7 +32,7 @@ struct HDF5DataSet {
 struct oDataSet {
     int id;
     int numberOfValues;
-    int size;
+    //int size;
     char name[256];
 };
 
@@ -40,9 +40,9 @@ struct oPrivateDataSet {
     oDataSet head;
     int neuron_id;
     int entries;
-    int buffer_size;
+    //int buffer_size;
     double interval;
-    int type;
+    //int type;
     hid_t dset_id;
     hid_t dattr_id;
     hid_t memtype;
@@ -206,7 +206,7 @@ class OHDF5mpipp : public ILogger
 		
 		void record_multi(int id, int neuron_id, int timestamp, const std::vector<double_t>& data);
 		void signup_spike(int id, int neuron_id, int expectedSpikeCount);
-		void signup_multi(int id, int neuron_id, double sampling_interval, std::vector<Name> valueNames, double simulationTime);
+		void signup_multi(int id, int neuron_id, double sampling_interval, std::vector<Name> valueNames);
 		
 		//void signup_spike(SpikeDetector* spike, int neuron_id, int buf);
 		//void signup_multi(Multimeter* multi, int neuron_id, int buf);

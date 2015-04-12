@@ -90,7 +90,7 @@ class HDF5mpipp : public ILogger
 		void record_spike(int id, int neuron_id, int timestamp);
 		void record_multi(int id, int neuron_id, int timestamp, const std::vector<double_t>& data);
 		void signup_spike(int id, int neuron_id, int expectedSpikeCount);
-		void signup_multi(int id, int neuron_id, double sampling_interval, std::vector<Name> valueNames, double simulationTime);
+		void signup_multi(int id, int neuron_id, double sampling_interval, std::vector<Name> valueNames);
 		
 		//void signup_spike(SpikeDetector* spike, int neuron_id, int buf);
 		//void signup_multi(Multimeter* multi, int neuron_id, int buf);

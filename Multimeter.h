@@ -69,7 +69,7 @@ public:
   void singup()
   {
     for (int i=0; i<neuron_ids.size(); i++) {
-      logger->signup_multi(multimeter_id,neuron_ids.at(i),samlpingInterval,valueNames,simulationTime);
+      logger->signup_multi(multimeter_id,neuron_ids.at(i),samlpingInterval,valueNames);
     }
     isSinup = true;
   }

@@ -410,7 +410,7 @@ void HDF5mpipp::signup_spike(int id, int neuron_id, int expectedSpikeCount)
   ownDataSet.head.id = id;
   ownDataSet.neuron_id = neuron_id;
   ownDataSet.head.size = expectedSpikeCount;
-  ownDataSet.buffer_size = expectedSpikeCount;
+  ownDataSet.buffer_size = buf_size;
   ownDataSet.head.numberOfValues = 0;
   ownDataSet.type = 0;
   strcpy(ownDataSet.head.name, datasetname_ss.str().c_str());
@@ -421,7 +421,7 @@ void HDF5mpipp::signup_spike(int id, int neuron_id, int expectedSpikeCount)
   
   spike_datasets.push_back(ownDataSet);
 }
-void HDF5mpipp::signup_multi(int id, int neuron_id, double sampling_interval, std::vector<Name> valueNames, double simulationTime)
+void HDF5mpipp::signup_multi(int id, int neuron_id, double sampling_interval, std::vector<Name> valueNames)
 {
   std::stringstream datasetname_ss;
   datasetname_ss << "multi_" << id << "_neuron_" << neuron_id;

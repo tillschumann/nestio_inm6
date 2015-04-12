@@ -68,9 +68,10 @@ void OHDF5mpipp::finalize()
   
   status = H5Sclose (spike_dataset.filespace);
   //status = H5Sclose (filespace);
-  
-  status = H5Dclose(spike_dataset.dset_id);
-  status = H5Dclose(multi_dataset.dset_id);
+  if (spike_datasets.size()>0)
+    status = H5Dclose(spike_dataset.dset_id);
+  if (multi_datasets.size()>0)
+    status = H5Dclose(multi_dataset.dset_id);
   
   
   status = H5Fclose (file);
@@ -309,11 +310,13 @@ void OHDF5mpipp::initialize(const double T)
 {
 #pragma omp single
   { 
+    T_ = T;
     /*
       * Create the compound datatype for memory. 
       */
     
     //spike
+    if (spike_datasets.size()>0) {
     spike_dataset.sizeof_entry = 3*sizeof (int);
     spike_dataset.memtype = H5Tcreate (H5T_COMPOUND, spike_dataset.sizeof_entry);
     status = H5Tinsert (spike_dataset.memtype, "id",0, H5T_NATIVE_INT);
@@ -328,38 +331,40 @@ void OHDF5mpipp::initialize(const double T)
     spike_dataset.next_nodeoffset = 0;
     
     spike_dataset.filespace = H5Dget_space (spike_dataset.dset_id);
+    }
     
     //multi
-
-    //numberOfValues has to be the max numberOfValues of all nodes
-    multi_dataset.max_numberOfValues = 0;
-    for (int i=0; i<multi_datasets.size(); i++) {
-      if (multi_dataset.max_numberOfValues<multi_datasets[i].head.numberOfValues)
-	multi_dataset.max_numberOfValues = multi_datasets[i].head.numberOfValues;
+    if (multi_datasets.size()>0) {
+      //numberOfValues has to be the max numberOfValues of all nodes
+      multi_dataset.max_numberOfValues = 0;
+      for (int i=0; i<multi_datasets.size(); i++) {
+	if (multi_dataset.max_numberOfValues<multi_datasets[i].head.numberOfValues)
+	  multi_dataset.max_numberOfValues = multi_datasets[i].head.numberOfValues;
+      }
+      int send_buf=multi_dataset.max_numberOfValues;
+      MPI_Allreduce(&send_buf, &multi_dataset.max_numberOfValues, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+      
+      multi_dataset.sizeof_entry = 3*sizeof (int)+multi_dataset.max_numberOfValues*sizeof(double);
+      multi_dataset.memtype = H5Tcreate (H5T_COMPOUND, multi_dataset.sizeof_entry);
+      status = H5Tinsert (multi_dataset.memtype, "id", 0, H5T_NATIVE_INT);
+      status = H5Tinsert (multi_dataset.memtype, "neuron id", sizeof(int), H5T_NATIVE_INT);
+      status = H5Tinsert (multi_dataset.memtype, "timestamp", 2*sizeof(int), H5T_NATIVE_INT);
+      for (int i=0; i<multi_dataset.max_numberOfValues; i++) {
+	std::stringstream ss;
+	ss << "V" << i;
+	status = H5Tinsert (multi_dataset.memtype, ss.str().c_str(),3*sizeof(int)+i*sizeof(double), H5T_NATIVE_DOUBLE);
+      }
+      
+      multi_dataset.window_size=0;
+      for (int i=0; i<multi_datasets.size(); i++) {
+	multi_dataset.window_size += T_/multi_datasets[i].interval;
+      }
+      
+      //std::cout << "multi window size=" << multi_dataset.window_size  << std::endl;
+      setNodeOffsetAndAllWindowSize(multi_dataset);
+      
+      registerHDF5DataSet(multi_dataset, "Multimeters");
     }
-    int send_buf=multi_dataset.max_numberOfValues;
-    MPI_Allreduce(&send_buf, &multi_dataset.max_numberOfValues, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-    
-    multi_dataset.sizeof_entry = 3*sizeof (int)+multi_dataset.max_numberOfValues*sizeof(double);
-    multi_dataset.memtype = H5Tcreate (H5T_COMPOUND, multi_dataset.sizeof_entry);
-    status = H5Tinsert (multi_dataset.memtype, "id", 0, H5T_NATIVE_INT);
-    status = H5Tinsert (multi_dataset.memtype, "neuron id", sizeof(int), H5T_NATIVE_INT);
-    status = H5Tinsert (multi_dataset.memtype, "timestamp", 2*sizeof(int), H5T_NATIVE_INT);
-    for (int i=0; i<multi_dataset.max_numberOfValues; i++) {
-      std::stringstream ss;
-      ss << "V" << i;
-      status = H5Tinsert (multi_dataset.memtype, ss.str().c_str(),3*sizeof(int)+i*sizeof(double), H5T_NATIVE_DOUBLE);
-    }
-    
-    multi_dataset.window_size=0;
-    for (int i=0; i<multi_datasets.size(); i++) {
-      multi_dataset.window_size += T_/multi_datasets[i].interval;
-    }
-    
-    //std::cout << "multi window size=" << multi_dataset.window_size  << std::endl;
-    setNodeOffsetAndAllWindowSize(multi_dataset);
-    
-    registerHDF5DataSet(multi_dataset, "Multimeters"); 
   }
 }
 
@@ -410,10 +415,13 @@ void OHDF5mpipp::registerHDF5DataSet(HDF5DataSet& dataset, char* name)
 
   /* Create a new dataset within the file using chunk 
       creation properties.  */
+  
+  std::cout << "H5Dcreate2 name=" << name << " max_numberOfValues=" << dataset.max_numberOfValues << std::endl;
 
   dataset.dset_id=H5Dcreate2 (file, name, filetype, dataset.filespace,
-	    H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	    H5P_DEFAULT, prop, H5P_DEFAULT);
   
+  status = H5Pclose(prop);
   status = H5Tclose(filetype);
   //status = H5Sclose (filespace);
 }
@@ -427,10 +435,8 @@ void OHDF5mpipp::signup_spike(int id, int neuron_id, int expectedSpikeCount)
   oPrivateDataSet ownDataSet;
   ownDataSet.head.id = id;
   ownDataSet.neuron_id = neuron_id;
-  ownDataSet.head.size = expectedSpikeCount;
-  ownDataSet.buffer_size = expectedSpikeCount;  //TODO
+  //ownDataSet.head.size = -1;
   ownDataSet.head.numberOfValues = 0;
-  ownDataSet.type = 0;
   strcpy(ownDataSet.head.name, datasetname_ss.str().c_str());
   
   #ifdef _DEBUG_MODE
@@ -439,7 +445,7 @@ void OHDF5mpipp::signup_spike(int id, int neuron_id, int expectedSpikeCount)
   
   spike_datasets.push_back(ownDataSet);
 }
-void OHDF5mpipp::signup_multi(int id, int neuron_id, double sampling_interval, std::vector<Name> valueNames, double simulationTime)
+void OHDF5mpipp::signup_multi(int id, int neuron_id, double sampling_interval, std::vector<Name> valueNames)
 {
   std::stringstream datasetname_ss;
   datasetname_ss << "multi_" << id << "_neuron_" << neuron_id;
@@ -447,10 +453,8 @@ void OHDF5mpipp::signup_multi(int id, int neuron_id, double sampling_interval, s
   oPrivateDataSet ownDataSet;
   ownDataSet.head.id = id;
   ownDataSet.neuron_id = neuron_id;
-  ownDataSet.head.size = (int)simulationTime/sampling_interval;      //TODO: simulationTime / sampling_interval
-  //ownDataSet.buffer_size = buf;
+  //ownDataSet.head.size = (int)T_/sampling_interval;      //TODO: simulationTime / sampling_interval
   ownDataSet.head.numberOfValues = valueNames.size();  //TODO
-  ownDataSet.type = 1;
   ownDataSet.interval = sampling_interval;
   strcpy(ownDataSet.head.name, datasetname_ss.str().c_str());
   #ifdef _DEBUG_MODE

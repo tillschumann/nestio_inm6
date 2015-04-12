@@ -35,16 +35,20 @@ private:
   int max_size;
   char* buffer;
 public:
-  SionBuffer(): buffer(NULL), ptr(0)
+  SionBuffer(): buffer(NULL), ptr(0), max_size(0)
   {}
-  SionBuffer(int size): ptr(0)
+  SionBuffer(int size):buffer(NULL), ptr(0)
   {
-    buffer = new char[size];
-    max_size=size;
+    if (size>0) {
+      buffer = new char[size];
+      max_size=size;
+    }
+    max_size=0;
   }
   ~SionBuffer()
   {
-    delete buffer;
+    if (buffer!=NULL)
+      delete[] buffer;
   }
   void extend(int size)
   {
@@ -53,7 +57,8 @@ public:
       max_size=size;
     }
     else {
-      delete[] buffer;
+      if (buffer!=NULL)
+	delete[] buffer;
       buffer = new char[size+max_size];
       max_size+=size;
     }
@@ -63,6 +68,10 @@ public:
     if (ptr+n<=max_size) {
       memcpy(buffer+ptr,v,n);
       ptr+=n;
+    }
+    else {
+      std::cout << "SionBuffer: buffer overflow: ptr=" << ptr << " n=" << n << " max_size=" << max_size << std::endl;
+      std::cerr << "SionBuffer: buffer overflow: ptr=" << ptr << " n=" << n << " max_size=" << max_size << std::endl;
     }
   }
   int getSize()
@@ -76,8 +85,10 @@ public:
       int new_max_size = max_size+size*10;
       char* new_buffer = new char[new_max_size];
       max_size=new_max_size;
-      memcpy(new_buffer,buffer,ptr);
-      delete[] buffer;
+      if (buffer!=NULL) {
+	memcpy(new_buffer,buffer,ptr);
+	delete[] buffer;
+      }
       buffer = new_buffer;
     }
   }
@@ -166,7 +177,7 @@ class Sionlib_logger : public ILogger
 		void crecord_multi(int multimeter_id, int neuron_id, int timestamp, const std::vector<double_t>& data);
 		
 		void signup_spike(int id, int neuron_id, int expectedSpikeCount);
-		void signup_multi(int id, int neuron_id, double sampling_interval, std::vector<Name> valueNames, double simulationTime);
+		void signup_multi(int id, int neuron_id, double sampling_interval, std::vector<Name> valueNames);
 		
 };
 

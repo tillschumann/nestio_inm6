@@ -12,11 +12,11 @@ LIB	= -lhdf5 -lrt -lz -lsz
 INCLUDE   = -I$(HDF_INSTALL)/include
 LIBSHDF   = $(EXTLIB) $(HDF_INSTALL)/lib/libhdf5_cpp.a
 
-MPISIONLIB =  `~/usr/sionlib-1.5.5-svn-1690/bin/sionconfig --libs --ompi -be -64`
-MPISIONCFLAGS = `~/usr/sionlib-1.5.5-svn-1690/bin/sionconfig --cflags --ompi -be -64` 
+MPISIONLIB =  `~/usr/sionlib-1.5.5-svn-1731/bin/sionconfig --libs --ompi -be -64`
+MPISIONCFLAGS = `~/usr/sionlib-1.5.5-svn-1731/bin/sionconfig --cflags --ompi -be -64` 
 
-SERSIONLIB =  `~/usr/sionlib-1.5.5-svn-1690/bin/sionconfig --libs --ser -be -64`
-SERSIONCFLAGS = `~/usr/sionlib-1.5.5-svn-1690/bin/sionconfig --cflags --ser -be -64` 
+SERSIONLIB =  `~/usr/sionlib-1.5.5-svn-1731/bin/sionconfig --libs --ser -be -64`
+SERSIONCFLAGS = `~/usr/sionlib-1.5.5-svn-1731/bin/sionconfig --cflags --ser -be -64` 
 
 all: hdf5mpipp \
  
