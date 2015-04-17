@@ -1,0 +1,200 @@
+%--------------------------------------------------------------------------------
+\documentclass[]{YIC2015}
+
+% --------------------------------------------------------------------------------
+% Include here your latex packages
+%--------------------------------------------------------------------------------
+\usepackage{graphicx}
+\usepackage{color}
+
+% --------------------------------------------------------------------------------
+% Article's title, with capital letter only at the beginning
+%--------------------------------------------------------------------------------
+\title{Modeling the I/O behavior of the NEST simulator using a proxy}
+
+% -------------------------------------------------------------------------------
+% List of authors
+% --------------------------------------------------------------------------------
+% Put the initials and surname of the first author ('et al.' if applicable) in
+% square brackets before the command \author
+%
+% Identify the corresponding author with the command \corref and each author
+% with the command \authref{a,b,...} according to the affiliation
+%
+\author[T. Schumann et al.]{%
+  T. Schumann\authref{a}\corref,
+  W. Frings\authref{b},
+  A. Peyser\authref{c},
+  W. Schenck\authref{c},
+  K. Thust\authref{b},
+  J.M. Eppler\authref{c}
+}
+
+% --------------------------------------------------------------------------------
+% Affiliations
+% --------------------------------------------------------------------------------
+\address{\authaddr{a}{Institute of Neuroscience and Medicine (INM-6), Computational and Systems Neuroscience \\ %
+    Institute for Advanced Simulation (IAS-6) \\ %
+    J\"ulich Aachen Research Alliance \\ %
+    Forschungszentrum J\"ulich GmbH \\ %
+    52425 J\"ulich, Germany}
+  \authaddr{b}{J\"ulich Supercomputing Centre \\ %
+    Institute for Advanced Simulation \\ %
+    Forschungszentrum J\"ulich GmbH\\ %
+    52425 J\"ulich, Germany}
+  \authaddr{c}{Simulation Lab Neuroscience - Bernstein Facility for Simulation and Database Technology \\ %
+    Institute for Advanced Simulation \\ %
+    J\"ulich Aachen Research Alliance \\ %
+    Forschungszentrum J\"ulich GmbH \\ %
+    52425 J\"ulich, Germany}
+}
+%
+% --------------------------------------------------------------------------------
+% Email address of the corresponding author
+% --------------------------------------------------------------------------------
+\corauth{till.schumann@rwth-aachen.de}
+
+% --------------------------------------------------------------------------------
+% Abstract
+% --------------------------------------------------------------------------------
+\abstract{\textit{
+NEST \cite{NEST} is a simulator for spiking neural
+  networks. It runs on local machines, small clusters and
+  supercomputers \cite{Plesser07}. Storing simulation data efficiently
+  is essential for neuroscientific studies but is not trivial on
+  supercomputers with centralized storage. To assess different I/O strategies and libraries, we have implemented a
+  \emph{proxy} which imitates the writing behavior of NEST.  This proxy allows benchmarking and statistical analysis, and
+  thus consequent optimizations, without the complexity of running full
+  NEST simulations.
+}}
+
+% --------------------------------------------------------------------------------
+% Keywords - must be separated by semicolon and no capital letters.
+% --------------------------------------------------------------------------------
+\keywords{parallel I/O; simulation; neuronal networks; supercomputer;
+  threading; MPI}
+
+% --------------------------------------------------------------------------------
+% Beginning of document
+% --------------------------------------------------------------------------------
+\begin{document}
+
+\maketitle
+
+% --------------------------------------------------------------------------------
+% Beginning of one section
+% --------------------------------------------------------------------------------
+\section{Introduction}
+%
+Over the past 20 years, the NEST Initiative \cite{NESTInitiative} has developed the NEST
+\cite{NEST} simulator for spiking neural network models. It is used in
+computational neuroscience to simulate the dynamics of the interaction
+between nerve cells. The systems explored with NEST range from small
+networks simulated on local machines up to large brain-scale circuits
+using the full capabilities of the world's leading supercomputers. To
+have this flexibility, NEST is parallelized in a hybrid fashion
+using threads on a compute node and MPI to communicate between the
+compute nodes \cite{Plesser07}.  Storing simulation data from such a
+massively parallel application efficiently during runtime is essential
+for neuroscientic studies, but not a trivial task on a supercomputer
+with centralized storage.
+
+Virtual devices store neuronal properties such as spiking activity
+and membrane voltage to disk. With increasing numbers of devices and
+compute nodes, writing becomes the major bottleneck, thus requiring
+new I/O strategies.
+
+Up to now NEST uses the C++ standard I/O library to store simulation results to disk.
+In the case of large scale simulations on super computers a huge amount of virtual devices can request file access.
+This leads to a large overhead of the writing calls.
+Therefore NEST shell use parallelized I/O libraries which make use of the MPI layer to store data more efficiently in parallel runs.
+
+\section{Implement I/O interface}
+NEST is used for large variation of use cases.
+Therefore different requirements on efficiency and output files are possible.
+To increase the use cases of I/O, an interface is developed which connects the virtual devices with the I/O libraries.
+Taking into account that most of the libraries use the MPI layer,
+the interface has to contain besides the open, close and write functions, synchronization functions.
+
+\pleasewrite{Till}{interface model}
+
+
+\subsection{Writing use cases of NEST}
+
+
+\section{Proxy development}
+To develop new I/O strategies information about writing behavior of NEST is necessary.
+Therefore the algorithms are analyzed and typical writings timings are estimated.
+Taking into account that NEST is a neuronal simulator,
+which build up a graph and simulates for each graph node equations in dependency of its neighbors,
+the program structure only tells information about possible but not the expected writing behavior.
+Therefore the code analysis is extended with a runtime measurement which covers standard use cases.
+
+\subsection{Interface of libraries}
+
+\subsection{Analyze NEST code}
+The algorithms of NEST are globally time-driven with constant time steps.
+In each time step all neurons are updated iteratively.
+The main program structure can be reduced to a for loop of update functions.
+In the update function neurons call their own algorithms, which may contain a writing calls.
+If a writing call occurs depends on the algorithm and the whole neuronal network structure.
+Because of a weight variation of algorithms and neuronal network structures, the update function is considered as a black box.
+
+In respect of use of different libraries for writing data to disk, a general 
+
+\subsection{Measure NEST runtime behavior}
+\pleasewrite{Wolfram}{Scorep analysis}
+\section{Implement drivers}
+\subsection{ASCII}
+\subsection{SIONLIB}
+\pleasewrite{Alex}{sionlib advantages}
+\subsection{HDF5}
+\section{Benchmarking and statistical analysis}
+
+
+\section{CONCLUSIONS}
+Conclusions should briefly state the author's viewpoint over the problem and the most important propositions. They can also include the perspectives for new developments as well as for new applications from the results.
+
+\section*{ACKNOWLEDGEMENTS}
+Enter acknowledgements directly before the references. Use the format of primary section headers, but do not number the acknowledgement and references sections.
+
+
+% --------------------------------------------------------------------------------
+% Bibliography
+% --------------------------------------------------------------------------------
+\begin{thebibliography}{99}
+
+% -------------------------------------------------------------------------------
+% Bibliography - example of book's reference
+% -------------------------------------------------------------------------------
+\bibitem{bookref} %
+F.~Author, S.~Author, T.~Author. \textit{Title}. Publisher, Year.
+
+% --------------------------------------------------------------------------------
+% Bibliography - example of journal's reference
+% --------------------------------------------------------------------------------
+\bibitem{NEST} %
+M.~Gewaltig, M.~Diesmann. \{NEST\} (\{NE\}ural \{S\}imulation \{T\}ool). \textit{Scholarpedia} %
+\textbf{2}:1430, 2007.
+
+% --------------------------------------------------------------------------------
+% Bibliography - example of proceedings' reference
+% --------------------------------------------------------------------------------
+\bibitem{Plesser07}
+H.~Plesser, J.~Eppler, A.~Morrison. Efficient Parallel Simulation of Large-Scale
+                  Neuronal Networks on Clusters of Multiprocessor
+                  Computers. In: \textit{Euro-Par 2007: Parallel Processing}, Berlin, Germany, 2007.
+                  
+\bibitem{frings2009scalable}
+W.~Frings, F.~Wolf, V.~Petkov. Scalable massively parallel I/O to task-local files In: \textit{High Performance Computing Networking, Storage and Analysis, Proceedings of the Conference on}, Berlin, Germany, 2009.
+
+% --------------------------------------------------------------------------------
+% Bibliography - the end.
+% --------------------------------------------------------------------------------
+
+\end{thebibliography}
+
+% --------------------------------------------------------------------------------
+% End of document
+% --------------------------------------------------------------------------------
+\end{document}
