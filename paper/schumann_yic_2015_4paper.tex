@@ -111,12 +111,19 @@ Therefore NEST shell use parallelized I/O libraries which make use of the MPI la
 
 \section{Implement I/O interface}
 NEST is used for large variation of use cases.
-Therefore different requirements on efficiency and output files are possible.
+Therefore different requirements on efficiency and output file formats are required.
 To increase the use cases of I/O, an interface is developed which connects the virtual devices with the I/O libraries.
-Taking into account that most of the libraries use the MPI layer,
+Taking into account that some of the libraries use the MPI layer,
 the interface has to contain besides the open, close and write functions, synchronization functions.
+The synchronization function allows the usage of inter node commuication during runtime.
+It has to be garantied that the synchronization function is calld simultaneously on all nodes.
 
-\pleasewrite{Till}{interface model}
+\begin{figure}[htbp]
+\centering %
+\includegraphics[scale=0.5]{loggerinterface.eps}
+\caption{Interface class of the logger}
+\label{fig:loggerinterface}
+\end{figure}
 
 
 \subsection{Writing use cases of NEST}
@@ -124,19 +131,18 @@ the interface has to contain besides the open, close and write functions, synchr
 
 \section{Proxy development}
 To develop new I/O strategies information about writing behavior of NEST is necessary.
-Therefore the algorithms are analyzed and typical writings timings are estimated.
+Therefore the main algorithms of NEST are analyzed and typical writing behavior is estimated.
 Taking into account that NEST is a neuronal simulator,
 which build up a graph and simulates for each graph node equations in dependency of its neighbors,
 the program structure only tells information about possible but not the expected writing behavior.
 Therefore the code analysis is extended with a runtime measurement which covers standard use cases.
 
-\subsection{Interface of libraries}
 
 \subsection{Analyze NEST code}
 The algorithms of NEST are globally time-driven with constant time steps.
 In each time step all neurons are updated iteratively.
 The main program structure can be reduced to a for loop of update functions.
-In the update function neurons call their own algorithms, which may contain a writing calls.
+In the update function neurons call their own algorithms, which may contain writing calls.
 If a writing call occurs depends on the algorithm and the whole neuronal network structure.
 Because of a weight variation of algorithms and neuronal network structures, the update function is considered as a black box.
 
@@ -186,7 +192,8 @@ H.~Plesser, J.~Eppler, A.~Morrison. Efficient Parallel Simulation of Large-Scale
                   Computers. In: \textit{Euro-Par 2007: Parallel Processing}, Berlin, Germany, 2007.
                   
 \bibitem{frings2009scalable}
-W.~Frings, F.~Wolf, V.~Petkov. Scalable massively parallel I/O to task-local files In: \textit{High Performance Computing Networking, Storage and Analysis, Proceedings of the Conference on}, Berlin, Germany, 2009.
+W.~Frings, F.~Wolf, V.~Petkov. Scalable massively parallel I/O to task-local files
+ In: \textit{High Performance Computing Networking, Storage and Analysis, Proceedings of the Conference on}, Berlin, Germany, 2009.
 
 % --------------------------------------------------------------------------------
 % Bibliography - the end.
