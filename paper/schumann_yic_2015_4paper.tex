@@ -105,10 +105,9 @@ compute nodes, writing becomes the major bottleneck, thus requiring
 new I/O strategies.
 
 Up to now NEST uses the C++ standard I/O library to store simulation results to disk.
-In the case of large scale simulations on super computers a huge amount of virtual devices can request file access.
+In the case of large scale simulations on supercomputers a huge amount of virtual devices can request file access.
 This leads to a large overhead of the writing calls.
-Therefore NEST shell use parallelized I/O libraries which make use of the MPI layer to store data more efficiently in parallel runs.
-
+Therefore NEST shell uses parallelized I/O libraries which make use of the MPI layer to store data more efficiently in parallel runs.
 \section{Implement I/O interface}
 NEST is used for large variation of use cases.
 Therefore different requirements on efficiency and output file formats are required.
@@ -133,7 +132,7 @@ It has to be garantied that the synchronization function is calld simultaneously
 To develop new I/O strategies information about writing behavior of NEST is necessary.
 Therefore the main algorithms of NEST are analyzed and typical writing behavior is estimated.
 Taking into account that NEST is a neuronal simulator,
-which build up a network and simulates for each  node equations in dependency of its neighbors,
+which builds up a network and simulates for each  node equations in dependency of its neighbors,
 the program structure only tells information about possible but not the expected writing behavior.
 Therefore the code analysis is extended with a runtime measurement which covers standard use cases.
 
@@ -143,9 +142,9 @@ The algorithms of NEST are globally time-driven with constant time steps.
 In each time step all neurons are updated iteratively.
 The main program structure can be reduced to a for loop of update functions of neurons.
 In the update function neurons call their own algorithm, which may contain writing calls.
-If a writing call occurs depends on the algorithm and the whole neuronal network structure.
-Because of a weight variation of algorithms and neuronal network structures, the update function is considered as a black box.
-Statistical values shell be used to reproduce the occurence of writing calls in the update functions.
+Whether a writing call occurs depends on the algorithm and the whole neuronal network structure.
+Because of a weight variation of algorithms and neuronal network structures, the update function is considered a black box.
+Statistical values shell be used to reproduce the occurrence of writing calls in the update functions.
 
 \subsection{Measure NEST runtime behavior}
 
@@ -179,9 +178,9 @@ Distribution &   deadTimeDeliver & sleeing time in deliver function  \\
 \section{CONCLUSIONS}
 The presented IO interface for NEST forms the flexibility to implement varies IO libraries independently.
 To optimize the implemented IO library the NESTproxy allows simple benchmarking without the overhead of the whole NEST program.
-The development of the IO libraries can be done seperatly of NEST.
-Taking into account that NEST is one of the leading neuronal simulaters, which run on the fastes super computers available.
-The NESTProxy can be used as a bechmarking tool for parallel IO libraries.
+The development of the IO libraries can be done separately from NEST.
+Taking into account that NEST is one of the leading neuronal simulaters, which run on the fastes super computers available,
+the NESTProxy can be used as a bechmarking tool for parallel IO libraries.
 
 \section*{ACKNOWLEDGEMENTS}
 Enter acknowledgements directly before the references. Use the format of primary section headers, but do not number the acknowledgement and references sections.
