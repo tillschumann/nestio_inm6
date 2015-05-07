@@ -142,8 +142,10 @@ The algorithms of NEST are globally time-driven with constant time steps.
 In each time step all neurons are updated iteratively.
 The main program structure can be reduced to a for loop of update functions of neurons.
 In the update function neurons call their own algorithm, which may contain writing calls.
-Whether a writing call occurs depends on the algorithm and the whole neuronal network structure.
-Because of a weight variation of algorithms and neuronal network structures, the update function is considered a black box.
+Whether a writing call occurs depends on the algorithm and the whole neuronal network structure.
+
+Because of a weight variation of algorithms and neuronal network structures, the update function is considered a black box.
+
 Statistical values shell be used to reproduce the occurrence of writing calls in the update functions.
 
 \subsection{Measure NEST runtime behavior}
@@ -170,7 +172,7 @@ Distribution &   deadTimeDeliver & sleeing time in deliver function  \\
 \section{Implement drivers}
 \subsection{ASCII}
 \subsection{SIONLIB}
-\pleasewrite{Alex}{sionlib advantages}
+\pleasewrite{Kay}{sionlib advantages}
 \subsection{HDF5}
 \section{Benchmarking and statistical analysis}
 
