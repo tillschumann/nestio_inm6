@@ -261,14 +261,20 @@ with SIONLIB.
 
 
 \section{CONCLUSIONS}
-The presented IO interface for NEST forms the flexibility to implement varies IO libraries independently.
-To optimize the implemented IO library the NESTProxy allows simple benchmarking without the overhead of the whole NEST program.
-The development of the IO libraries can be done separately from NEST.
-Taking into account that NEST is one of the leading neuronal simulators, which run on the fastest super computers available,
-the NESTProxy can be used as a benchmarking tool for parallel IO libraries.
+The I/O interface presented for NEST allows developers to flexibly
+switch between several front-ends with differing performance
+characteristics and use-case profiles. The additional NESTProxy is
+crucial for profiling and benchmarking NEST I/O over a range of
+parameters without the computational and developer overhead required
+to try to cover the same range using production runs of
+NEST. Additionally, NESTProxy can be used as a generic tool for
+benchmarking I/O strategies in general, given that NEST is a leading
+neuronal network simulators with performance characteristics
+determined by the same constraints affecting other similar software
+packages (NEURON \cite{neuron}, Brian \cite{brian}, Nengo \cite{nengo}).
 
 \section*{ACKNOWLEDGEMENTS}
-Enter acknowledgements directly before the references. Use the format of primary section headers, but do not number the acknowledgement and references sections.
+Partially funded by the Helmholtz Association through the Helmholtz Portfolio Theme "Supercomputing and Modeling for the Human Brain".
 
 
 % --------------------------------------------------------------------------------
