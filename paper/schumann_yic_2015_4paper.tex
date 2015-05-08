@@ -231,11 +231,32 @@ HDF5 interfaces.
 
 \subsection{SIONLIB}
 \pleasewrite{Kay}{sionlib advantages}
+
 \subsection{HDF5}
-HDF5 is a widely spread file format in the neuroscience community.
-Furthermore it is easy to handle because of its file structure.
-For big simulation it does not to scale well for unequal balanced parallel writings.
-Nevertheless for small simulation 
+HDF5 is an API to commonly used file formats in the neuroscience
+community, such as NEON \cite{neon} and Neuroshare \cite{neuroshare}.
+Since they use a common binary layout and API, data can be accessed
+from many different languages and through many different libraries. In
+particular, the HDF group publishes pHDF5 (parallel HDF5,
+\cite{phdf5}) which allows read and write access to HDF5 file formats
+over MPI connected networks with tuning for particular HPC file
+systems such as Luster. 
+
+HDF5 is not a streaming file format, but a highly structured,
+self-describing format intended for long-term accessibility and
+versatile usage. The cost of this is that significant amounts of
+metadata must be stored to describe the data layout, creating a
+collective barrier when finite data structures are extended, as we
+have when additional unpredictable spiking event data must be stored,
+or the length of a simulation is extended for continuous data
+acquisition. In short, pHDF5 is read-oriented rather than
+write-oriented, with some of the same drawbacks (and advantages) for
+writing seen with the ASCII driver.
+
+Therefore, for large neuronal networks simulated in NEST, we have
+found it difficult to produce performance similar to what we have done
+with SIONLIB. 
+
 \section{Benchmarking and statistical analysis}
 
 
