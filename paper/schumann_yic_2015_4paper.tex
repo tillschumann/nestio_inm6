@@ -101,13 +101,19 @@ with centralized storage.
 
 Virtual devices store neuronal properties such as spiking activity
 and membrane voltage to disk. With increasing numbers of devices and
-compute nodes, writing becomes the major bottleneck, thus requiring
+compute nodes, opening files and writing to them become major bottlenecks, thus requiring
 new I/O strategies.
 
-Up to now NEST uses the C++ standard I/O library to store simulation results to disk.
-In the case of large scale simulations on supercomputers a huge amount of virtual devices can request file access.
-This leads to a large overhead of the writing calls.
-Therefore NEST shell uses parallelized I/O libraries which make use of the MPI layer to store data more efficiently in parallel runs.
+Until now, NEST has used the C++ standard I/O library to store
+simulation results to disk.  In the case of large scale simulations on
+supercomputers, a huge number of virtual devices can request file
+access simultaneously, leading to write system calls becoming a
+significant element of overhead. We have therefore investigated
+possible performance gains by replacing the current I/O paradigm with
+calls to parallelized I/O libraries which could avoid serialization
+bottlenecks when interacting with underlying file systems such as GPFS
+\cite{GPFS} for highly parallel simulations.
+
 \section{Implement I/O interface}
 NEST is used for large variation of use cases.
 Therefore different requirements on efficiency and output file formats are required.
@@ -187,11 +193,42 @@ Distribution &   deadTimeDeliver & sleeing time in deliver function  \\
 
 
 \section{Implement drivers}
-Based on the interface descripted above different drivers are implemented.
+Based on the interface descripted above different drivers are
+implemented.
+
 \subsection{ASCII}
-NEST have been using the standard c++ IO library to write data to disk up to now.
-The implementation is ported to the new interface.
-Besides benchmarking it is used to validate the new implementation.
+Current versions of NEST use the standard C++ IO Stream library
+\cite{stream} to permanently store results as plain text files
+containing such information as time stamps as floating point
+strings. The advantage of such a scheme is simplicity in
+implementation and in post-processing for analysis in addition to
+plain-text's self-descriptive nature.
+
+However for large-scale simulations, this leads to: 1) excessively
+large amounts of data written to disk which is both a performance
+issue and a practical storage problem; 2) a serialization bottleneck
+when opening a separate file per process; and 3) a serialization
+bottleneck for metadata updates in the file system when new blocks are
+allocated. One solution used in recent iterations of NEST has been the
+implementation of a global spike detector \cite{gsd}: a single file is
+opened by rank 0 to store spiking events, a low cost solution since
+currently all ranks see all spike events through MPI collective
+communication. On the other hand, such an approach has several
+long-term consequences: 1) it constitutes a serialization bottleneck
+as spike event I/O is handled by only a single rank rather than being
+distributed over available processors; 2) it is a design constraint,
+depending upon all spikes being globally shipped which may not be
+scalable; and 3) it is inapplicable to more voluminous data such as
+membrane potential measurements which can not be tractably shipped to
+a single I/O node.
+
+We will use an ``ASCII'' driver, though, as a benchmark to compare
+other approaches, as a robust backup for debugging and validating
+other drivers, and as a legacy interface allowing backwards
+compatibility. This requirement has required us to begin abstracting
+the current interface to a common API in the context of SIONLIB and
+HDF5 interfaces.
+
 \subsection{SIONLIB}
 \pleasewrite{Kay}{sionlib advantages}
 \subsection{HDF5}
