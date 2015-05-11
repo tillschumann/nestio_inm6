@@ -118,7 +118,7 @@ bottlenecks when interacting with underlying file systems such as GPFS
 NEST is used for large variation of use cases.
 Therefore different requirements on efficiency and output file formats are required.
 To increase the use cases of I/O, an interface is developed which connects the virtual devices with the I/O libraries.
-Taking into account that some of the libraries use the MPI layer,
+Taking into account that some of the libraries use parallelized I/O libraries,
 the interface has to contain besides the open, close and write functions, synchronization functions.
 The synchronization function allows the usage of inter node communication during simulation.
 It has to be guarantied that the synchronization function is called simultaneously on all nodes.
@@ -139,29 +139,22 @@ cortex}
 To develop new I/O strategies information about writing behavior of NEST is necessary.
 Therefore the main algorithms of NEST are analyzed and typical writing behavior is estimated.
 Taking into account that NEST is a neuronal simulator,
-which builds up a network and simulates for each  node equations in dependency of its neighbors,
+which builds up a network and solves for each  node algorithms in dependency of its neighbors,
 the program structure only tells information about possible but not the expected writing behavior.
 Therefore the code analysis is extended with a runtime measurement which covers standard use cases.
 
-\subsection{Workflow of NESTProxy}
-The NESTProxy contains three main parts: Construction of the network, iteration loop and destruction of the network.
-In the first part each node creates a set of \emph{Spikedetector} and \emph{Multimeter} objects.
-The number is taken from the input parameters \emph{numberOfSpikeDetectorsPerThread} and \emph{numberOfMultimetersPerThread} respectivly.
-The objects are initialized with their parameters \ref{tab:table-silva1}
-(for \emph{Spikedetector}: \emph{spikesPerDector} and \emph{Multimeter}: \emph{samlpingIntervalsOfMeter}, \emph{numberOfValuesWrittenByMeter}.
-The iteration loops contains a sleep function, which uses the distribution from \emph{deadTimeDeliver},
-all update function calls of the \emph{Spikedetector} and \emph{Multimeter} object and between this calls 
-a sleep function, which uses the distribution from \emph{deadTimeUpdate}.
-During the update function each \emph{Spikedetector}, \emph{Multimeter} object calls one or multiple write function, depending on its distribution variable.
-
-
 \subsection{Analyze NEST code}
-The algorithms of NEST are globally time-driven with constant time steps.
-In each time step all neurons are updated iteratively.
-The main program structure can be reduced to a for loop of update functions of neurons.
-In the update function neurons call their own algorithm, which may contain writing calls.
-Whether a writing call occurs depends on the algorithm and the whole neuronal network structure.
-Because of a weight variation of algorithms and neuronal network structures, the update function is considered a black box.
+%The algorithms of NEST are globally time-driven with constant time steps.
+%In each time step all neurons are updated iteratively.
+The main program structure of NEST can be reduced to a iteration loop of gather, scatter and update functions of the network.
+Gather and Scatter calls distribute the node states in the network.
+The update function calls for each node internal algorithms which processes the information.
+If the network node is a virtual recording device, it calls writing functions depending on the incomming information.
+There are two types of  virtual recording devices used: \emph{Spikedetector} and \emph{Multimeter}.
+The \emph{Spikedetector} handles spike events and
+the \emph{Multimeter} requests state parameters of node objects.
+Whether a writing call occurs depends on the whole neuronal network structure.
+Because of a weight variation the update function is considered a black box.
 Statistical values shell be used to reproduce the occurrence of writing calls in the update functions.
 
 \subsection{Measure NEST runtime behavior}
@@ -173,6 +166,17 @@ produce time series of function calls for standard use cases.
 Only functions are instrumented, which have an potencial influence on the writing behavior.
 This time series are used to estimate the distribution of the timings.
 
+\subsection{Workflow of NESTProxy}
+The NESTProxy contains three main parts: Construction of the network, iteration loop and destruction of the network.
+In the first part each node creates a set of \emph{Spikedetector} and \emph{Multimeter} objects.
+The number is taken from the input parameters \emph{numberOfSpikeDetectorsPerThread} and \emph{numberOfMultimetersPerThread} respectivly.
+The objects are initialized with their parameters (s. Table \ref{tab:table-silva1})
+(for \emph{Spikedetector}: \emph{spikesPerDector} and \emph{Multimeter}: \emph{samlpingIntervalsOfMeter}, \emph{numberOfValuesWrittenByMeter}.
+The iteration loops contains a sleep function, which uses the distribution from \emph{deadTimeDeliver},
+all update function calls of the recording device object and between this calls 
+a sleep function, which uses the distribution from \emph{deadTimeUpdate}.
+During the update function each \emph{Spikedetector}, \emph{Multimeter} object calls one or multiple write function, depending on its distribution variable.
+The random implementation is based on the \emph{c++11} standard library.
 \begin{table}[htdp]
 \caption{Stochastical parameters, which are input parameters of the NESTProxy}
 \centering
@@ -189,6 +193,7 @@ Distribution &   deadTimeDeliver & sleeing time in deliver function  \\
 \hline\hline
 \end{tabular}
 \label{tab:table-silva1}
+\caption{Input parameters of the NESTProxy. Following distributions are implemented: Standard, Poisson, Binominal and fixed values}
 \end{table}
 
 
