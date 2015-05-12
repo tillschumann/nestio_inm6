@@ -135,6 +135,19 @@ It has to be guarantied that the synchronization function is called simultaneous
 \subsection{Writing use cases of NEST}
 \pleasewrite{Jochen}{the random balanced network and the reduced model of the visual
 cortex}
+\begin{itemize}
+  \item{Random balanced network: Dry-run simulation for M=32, T=16, N=300,000, mean firing frequ. of 7 Hz}
+  \item{Microcircuit model: Real simulation of only one area, run over 1000.0 ms: \\
+- Number of MPI processes: 32\\
+- Number of threads per MPI process: 8\\
+- Number of virtual processes (VPs): 256 (32x8)\\
+- Number of spike detectors per VP: 8\\
+- Number of neurons attached to each spike detector: 10000/256 (ca.)\\
+- Number of multimeters per VP: 8\\
+- Number of neurons attached to each multimeter: 500/256\\
+- MinDelay interval: Most likely equal to h step (= 0.1 ms)\\
+- Overall number of neurons in the network: 80,000}
+\end{itemize}
 
 \section{Proxy development}
 To develop new I/O strategies information about writing behavior of NEST is necessary.
@@ -151,7 +164,7 @@ The main program structure of NEST can be reduced to a iteration loop of gather,
 Gather and Scatter calls distribute the node states in the network.
 The update function calls for each node internal algorithms which processes the information.
 If the network node is a virtual recording device,
-it calls writing functions depending on the incomming information.
+it calls writing functions depending on the incoming information.
 There are two types of  virtual recording devices used: \emph{Spikedetector} and \emph{Multimeter}.
 The \emph{Spikedetector} handles spike events and
 the \emph{Multimeter} requests state parameters of node objects.
@@ -160,13 +173,15 @@ Because of a weight variation the update function is considered a black box.
 Statistical values shell be used to reproduce the occurrence of writing calls in the update functions.
 
 \subsection{Measure NEST runtime behavior}
-To generate reliable timing mesaurements of the runtime behavior,
-the NEST code is instrumented with ScoreP \cite{scoreP}.
-\pleasewrite{Wolfram}{Scorep analysis}
-Resulting runs of the instrumented NEST,
-produce time series of function calls for standard use cases.
-Only functions are instrumented, which have an potencial influence on the writing behavior.
-This time series are used to estimate the distribution of the timings.
+To generate reliable timing measurements of the runtime behavior,
+part of the NEST code was manually instrumented with Score--P \cite{ScoreP} ---
+especially the relevant member functions of the virtual recording devices and
+within them the calls to lower--level I/O functions. We used the instrumented
+NEST binary to generate trace data for the two use cases described above. From
+the trace data, we derived several statistical measures which describe the
+runtime behavior of NEST, e.g.~the distribution of onsets of spike writing in
+each thread relative to the start of the update phase in the main simulation
+cycle of NEST.
 
 \subsection{Workflow of NESTProxy}
 The NESTProxy contains three main parts: Construction of the network,
@@ -347,8 +362,23 @@ H.~Plesser, J.~Eppler, A.~Morrison. Efficient Parallel Simulation of Large-Scale
                   Computers. In: \textit{Euro-Par 2007: Parallel Processing}, Berlin, Germany, 2007.
 
 \bibitem{frings2009scalable}
-W.~Frings, F.~Wolf, V.~Petkov. Scalable massively parallel I/O to task-local files
+W.~Frings, F.~Wolf, V.~Petkov. Scalable massively parallel I/O to task-local files.
  In: \textit{High Performance Computing Networking, Storage and Analysis, Proceedings of the Conference on}, Berlin, Germany, 2009.
+
+\bibitem{ScoreP}
+Andreas Kn\"upfer et al. Score--P --- A Joint Performance Measurement Run--Time Infrastructure for Periscope, Scalasca, TAU, and Vampir. In: \textit{Proc. of 5th Parallel Tools Workshop}, Dresden, Germany, 2011.
+
+% @INPROCEEDINGS{knuepfer:2011:scorep,
+%      author = {Kn{\"{u}}pfer, Andreas and R{\"{o}}ssel, Christian and an Mey, Dieter and Biersdorff, Scott and Diethelm, Kai and Eschweiler, Dominic and Geimer, Markus and Gerndt, Michael and Lorenz, Daniel and Malony, Allen D. and Nagel, Wolfgang E. and Oleynik, Yury and Philippen, Peter and Saviankou, Pavel and Schmidl, Dirk and Shende, Sameer S. and Tsch{\"{u}}ter, Ronny and Wagner, Michael and Wesarg, Bert and Wolf, Felix},
+%       month = sep,
+%       title = {{Score-P} -- {A} Joint Performance Measurement Run-Time Infrastructure for {Periscope}, {Scalasca}, {TAU}, and {Vampir}},
+%   booktitle = {Proc. of 5th Parallel Tools Workshop, 2011, Dresden, Germany},
+%        year = {2012},
+%       pages = {79-91},
+%   publisher = {Springer Berlin Heidelberg},
+%         url = {http://dx.doi.org/10.1007/978-3-642-31476-6_7},
+%         doi = {10.1007/978-3-642-31476-6_7}
+% }
 
 % --------------------------------------------------------------------------------
 % Bibliography - the end.
