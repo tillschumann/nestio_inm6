@@ -96,10 +96,10 @@ have this flexibility, NEST is parallelized in a hybrid fashion
 using threads on a compute node and MPI to communicate between the
 compute nodes \cite{Plesser07}.  Storing simulation data from such a
 massively parallel application efficiently during runtime is essential
-for neuroscientic studies, but not a trivial task on a supercomputer
+for neuroscientific studies, but not a trivial task on a supercomputer
 with centralized storage.
 
-Virtual devices store neuronal properties such as spiking activity
+Virtual recording devices store neuronal properties such as spiking activity
 and membrane voltage to disk. With increasing numbers of devices and
 compute nodes, opening files and writing to them become major bottlenecks, thus requiring
 new I/O strategies.
@@ -118,7 +118,7 @@ bottlenecks when interacting with underlying file systems such as GPFS
 NEST is used for large variation of use cases.
 Therefore different requirements on efficiency and output file formats are required.
 To increase the use cases of I/O, an interface is developed which connects the virtual devices with the I/O libraries.
-Taking into account that some of the libraries use parallelized I/O libraries,
+Taking into account that some of the libraries use parallelized I/O,
 the interface has to contain besides the open,
 close and write functions, synchronization functions.
 The synchronization function allows the usage of inter node communication during simulation.
@@ -174,9 +174,9 @@ iteration loop and destruction of the network.
 In the first part each node creates a set of \emph{Spikedetector} and \emph{Multimeter} objects.
 The number is taken from the input parameters \emph{numberOfSpikeDetectorsPerThread} and \emph{numberOfMultimetersPerThread} respectivly.
 The objects are initialized with their parameters (s. Table \ref{tab:table-silva1})
-(for \emph{Spikedetector}: \emph{spikesPerDector} and \emph{Multimeter}: \emph{samlpingIntervalsOfMeter}, \emph{numberOfValuesWrittenByMeter}.
+(for \emph{Spikedetector}: \emph{spikesPerDector} and \emph{Multimeter}: \emph{samplingIntervalsOfMeter}, \emph{numberOfValuesWrittenByMeter}.
 The iteration loops contains a sleep function, which uses the distribution from \emph{deadTimeDeliver},
-all update function calls of the recording device object and between this calls 
+all update function calls of the recording device object and between this calls
 a sleep function, which uses the distribution from \emph{deadTimeUpdate}.
 During the update function each \emph{Spikedetector}, \emph{Multimeter} object calls one or multiple write function, depending on its distribution variable.
 The random implementation is based on the \emph{C++11} standard library.
@@ -189,20 +189,20 @@ The random implementation is based on the \emph{C++11} standard library.
 Integer &   numberOfSpikeDetectorsPerThread & number of SpikeDetectors per thread  \\
 Integer &   numberOfMultimetersPerThread & number of Multimeters per thread  \\
 Distribution &   spikesPerDector & number of spikes generated at each SpikeDetector per iteration  \\
-Distribution &   samlpingIntervalsOfMeter & sampling interval of the Multimeters  \\
+Distribution &   samplingIntervalsOfMeter & sampling interval of the Multimeters  \\
 Distribution &   numberOfValuesWrittenByMeter & number of written values by each Multimeter in sampling interval  \\
 Distribution  &  deadTimeUpdate & sleeping timings between SpikeDetector and Multimeters writing operations \\
-Distribution &   deadTimeDeliver & sleeing time in deliver function  \\
+Distribution &   deadTimeDeliver & sleeping time in deliver function  \\
 \hline\hline
 \end{tabular}
 \label{tab:table-silva1}
-\caption{Input parameters of the NESTProxy. Following distributions 
+\caption{Input parameters of the NESTProxy. Following distributions
 are implemented: Standard, Poisson, Binominal and fixed values}
 \end{table}
 
 
 \section{Implement drivers}
-Based on the interface descripted above different drivers are
+Based on the interface described above different drivers are
 implemented.
 
 \subsection{ASCII}
@@ -249,7 +249,7 @@ from many different languages and through many different libraries. In
 particular, the HDF group publishes pHDF5 (parallel HDF5,
 \cite{hdf5}) which allows read and write access to HDF5 file formats
 over MPI connected networks with tuning for particular HPC file
-systems such as Lustre \cite{lustre}. 
+systems such as Lustre \cite{lustre}.
 
 HDF5 is not a streaming file format, but a highly structured,
 self-describing format intended for long-term accessibility and
@@ -264,7 +264,7 @@ writing seen with the ASCII driver.
 
 Therefore, for large neuronal networks simulated in NEST, we have
 found it difficult to produce performance similar to what we have done
-with SIONLIB. 
+with SIONLIB.
 
 \section{Benchmarking and statistical analysis}
 
@@ -304,14 +304,14 @@ Partially funded by the Helmholtz Association through the Helmholtz Portfolio Th
 
 \bibitem{neon}
 Garcia, Samuel and Guarino, Domenico and Jaillet, Florent and Jennings, Todd and Pr{\"o}pper, Robert and Rautenberg, Philipp L and Rodgers, Chris C and Sobolev, Andrey and Wachtler, Thomas and Yger, Pierre and others.
-\textit{Neo: an object model for handling electrophysiology data in multiple formats}.
+\textit{NEO: an object model for handling electrophysiology data in multiple formats}.
 Frontiers in neuroinformatics, 2014.
 
 \bibitem{neuron}
 Hines, Michael L., and Nicholas T. Carnevale. \textit{The NEURON simulation environment}. Neural computation 9.6: 1179-1209, 1997.
 
 \bibitem{brian}
-Goodman, Dan FM, and Romain Brette. \textit{The brian simulator}. Frontiers in neuroscience 3.2: 192, 2009.
+Goodman, Dan FM, and Romain Brette. \textit{The BRIAN simulator}. Frontiers in neuroscience 3.2: 192, 2009.
 
 \bibitem{nengo}
 Stewart, Terrence C., Bryan Tripp, and Chris Eliasmith. \textit{Python scripting in the Nengo simulator}. Frontiers in neuroinformatics 3, 2009.
@@ -335,7 +335,7 @@ Neuroshare Home Page. The Neuroshare Project. \textit{http://neuroshare.sourcefo
 % Bibliography - example of journal's reference
 % --------------------------------------------------------------------------------
 \bibitem{NEST} %
-M.~Gewaltig, M.~Diesmann. \{NEST\} (\{NE\}ural \{S\}imulation \{T\}ool). \textit{Scholarpedia} %
+M.~Gewaltig, M.~Diesmann. NEST (NEural Simulation Tool). \textit{Scholarpedia} %
 \textbf{2}:1430, 2007.
 
 % --------------------------------------------------------------------------------
@@ -345,7 +345,7 @@ M.~Gewaltig, M.~Diesmann. \{NEST\} (\{NE\}ural \{S\}imulation \{T\}ool). \textit
 H.~Plesser, J.~Eppler, A.~Morrison. Efficient Parallel Simulation of Large-Scale
                   Neuronal Networks on Clusters of Multiprocessor
                   Computers. In: \textit{Euro-Par 2007: Parallel Processing}, Berlin, Germany, 2007.
-                  
+
 \bibitem{frings2009scalable}
 W.~Frings, F.~Wolf, V.~Petkov. Scalable massively parallel I/O to task-local files
  In: \textit{High Performance Computing Networking, Storage and Analysis, Proceedings of the Conference on}, Berlin, Germany, 2009.
