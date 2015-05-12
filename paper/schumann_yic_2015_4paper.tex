@@ -119,7 +119,8 @@ NEST is used for large variation of use cases.
 Therefore different requirements on efficiency and output file formats are required.
 To increase the use cases of I/O, an interface is developed which connects the virtual devices with the I/O libraries.
 Taking into account that some of the libraries use parallelized I/O libraries,
-the interface has to contain besides the open, close and write functions, synchronization functions.
+the interface has to contain besides the open,
+close and write functions, synchronization functions.
 The synchronization function allows the usage of inter node communication during simulation.
 It has to be guarantied that the synchronization function is called simultaneously on all nodes.
 
@@ -149,7 +150,8 @@ Therefore the code analysis is extended with a runtime measurement which covers 
 The main program structure of NEST can be reduced to a iteration loop of gather, scatter and update functions of the network.
 Gather and Scatter calls distribute the node states in the network.
 The update function calls for each node internal algorithms which processes the information.
-If the network node is a virtual recording device, it calls writing functions depending on the incomming information.
+If the network node is a virtual recording device,
+it calls writing functions depending on the incomming information.
 There are two types of  virtual recording devices used: \emph{Spikedetector} and \emph{Multimeter}.
 The \emph{Spikedetector} handles spike events and
 the \emph{Multimeter} requests state parameters of node objects.
@@ -167,7 +169,8 @@ Only functions are instrumented, which have an potencial influence on the writin
 This time series are used to estimate the distribution of the timings.
 
 \subsection{Workflow of NESTProxy}
-The NESTProxy contains three main parts: Construction of the network, iteration loop and destruction of the network.
+The NESTProxy contains three main parts: Construction of the network,
+iteration loop and destruction of the network.
 In the first part each node creates a set of \emph{Spikedetector} and \emph{Multimeter} objects.
 The number is taken from the input parameters \emph{numberOfSpikeDetectorsPerThread} and \emph{numberOfMultimetersPerThread} respectivly.
 The objects are initialized with their parameters (s. Table \ref{tab:table-silva1})
@@ -176,7 +179,7 @@ The iteration loops contains a sleep function, which uses the distribution from 
 all update function calls of the recording device object and between this calls 
 a sleep function, which uses the distribution from \emph{deadTimeUpdate}.
 During the update function each \emph{Spikedetector}, \emph{Multimeter} object calls one or multiple write function, depending on its distribution variable.
-The random implementation is based on the \emph{c++11} standard library.
+The random implementation is based on the \emph{C++11} standard library.
 \begin{table}[htdp]
 \caption{Stochastical parameters, which are input parameters of the NESTProxy}
 \centering
@@ -193,7 +196,8 @@ Distribution &   deadTimeDeliver & sleeing time in deliver function  \\
 \hline\hline
 \end{tabular}
 \label{tab:table-silva1}
-\caption{Input parameters of the NESTProxy. Following distributions are implemented: Standard, Poisson, Binominal and fixed values}
+\caption{Input parameters of the NESTProxy. Following distributions 
+are implemented: Standard, Poisson, Binominal and fixed values}
 \end{table}
 
 
@@ -243,7 +247,7 @@ community, such as NEON \cite{neon} and Neuroshare \cite{neuroshare}.
 Since they use a common binary layout and API, data can be accessed
 from many different languages and through many different libraries. In
 particular, the HDF group publishes pHDF5 (parallel HDF5,
-\cite{phdf5}) which allows read and write access to HDF5 file formats
+\cite{hdf5}) which allows read and write access to HDF5 file formats
 over MPI connected networks with tuning for particular HPC file
 systems such as Luster. 
 
@@ -287,11 +291,42 @@ Partially funded by the Helmholtz Association through the Helmholtz Portfolio Th
 % --------------------------------------------------------------------------------
 \begin{thebibliography}{99}
 
+
+
+%@article{garcia2014neo,
+%  title={Neo: an object model for handling electrophysiology data in multiple formats},
+%  author={Garcia, Samuel and Guarino, Domenico and Jaillet, Florent and Jennings, Todd and Pr{\"o}pper, Robert and Rautenberg, Philipp L and Rodgers, Chris C and Sobolev, Andrey and Wachtler, Thomas and Yger, Pierre and others},
+%  journal={Frontiers in neuroinformatics},
+%  volume={8},
+%  year={2014},
+%  publisher={Frontiers Media SA}
+%}
+
+\bibitem{neo}
+Garcia, Samuel and Guarino, Domenico and Jaillet, Florent and Jennings, Todd and Pr{\"o}pper, Robert and Rautenberg, Philipp L and Rodgers, Chris C and Sobolev, Andrey and Wachtler, Thomas and Yger, Pierre and others.
+\textit{Neo: an object model for handling electrophysiology data in multiple formats}.
+Frontiers in neuroinformatics, 2014.
+
+\bibitem{neuron}
+Hines, Michael L., and Nicholas T. Carnevale. \textit{The NEURON simulation environment}. Neural computation 9.6: 1179-1209, 1997.
+
+\bibitem{brian}
+Goodman, Dan FM, and Romain Brette. \textit{The brian simulator}. Frontiers in neuroscience 3.2: 192, 2009.
+
+\bibitem{nengo}
+Stewart, Terrence C., Bryan Tripp, and Chris Eliasmith. \textit{Python scripting in the Nengo simulator}. Frontiers in neuroinformatics 3, 2009.
+
 % -------------------------------------------------------------------------------
 % Bibliography - example of book's reference
 % -------------------------------------------------------------------------------
-\bibitem{bookref} %
-F.~Author, S.~Author, T.~Author. \textit{Title}. Publisher, Year.
+%\bibitem{bookref} %
+%F.~Author, S.~Author, T.~Author. \textit{Title}. Publisher, Year.
+
+\bibitem{hdf5}
+HDF5 Home Page. The HDF Group and by the National Center for Supercomputing Applications. \textit{http://www.hdfgroup.org/HDF5/PHDF5}
+
+\bibitem{neuroshare}
+Neuroshare Home Page. The Neuroshare Project. \textit{http://neuroshare.sourceforge.net}
 
 % --------------------------------------------------------------------------------
 % Bibliography - example of journal's reference
