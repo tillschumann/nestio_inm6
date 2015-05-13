@@ -60,7 +60,7 @@
 % --------------------------------------------------------------------------------
 \abstract{\textit{ NEST \cite{NEST} is a simulator for spiking neural
     networks. It runs on ordinary desktop computers and notebooks,
-    small clusters and supercomputers \cite{Plesser07}. Storing
+    small clusters and supercomputers. Storing
     simulation data efficiently is essential for neuroscientific
     studies but not trivial on supercomputers with centralized
     storage. To assess different I/O strategies and libraries, we have
@@ -95,7 +95,7 @@ with NEST range from small networks simulated on local machines up to
 large brain-scale circuits using the full capabilities of the world's
 leading supercomputers. To have this flexibility, NEST is parallelized
 in a hybrid fashion using threads on a compute node and MPI to
-communicate between the compute nodes \cite{Plesser07}.  Storing
+communicate between the compute nodes. Storing
 simulation data from such a massively parallel application efficiently
 during runtime is essential for neuroscientific studies, but not a
 trivial task on a supercomputer with centralized storage.
@@ -137,7 +137,7 @@ function is called simultaneously on all nodes.
 \begin{figure}[htbp]
 \centering %
 \includegraphics[scale=0.5]{loggerinterface.eps}
-\caption{ILogger is the implemented I/O interface for the virtual recording devices. 
+\caption{ILogger is the implemented I/O interface for the virtual recording devices.
 Three differenct logger interfaces are available: \emph{ASCIILogger} (see section \ref{sec:ascii}),
 \emph{SIONLogger} (see section \ref{sec:sionlib}) and \emph{HDF5Logger} (see section \ref{sec:hdf5})}
 \label{fig:loggerinterface}
@@ -278,7 +278,7 @@ implemented.
 \subsection{ASCII}
 \label{sec:ascii}
 Current versions of NEST use the standard C++ I/O stream library
-\cite{stream} to permanently store results as plain text files
+to permanently store results as plain text files
 containing information as time stamps as floating point strings. The
 advantage of such a scheme is simplicity in implementation and in
 post-processing for analysis tools in addition to plain-text's
@@ -343,7 +343,7 @@ from many different languages and through many different libraries. In
 particular, the HDF group publishes pHDF5 (parallel HDF5, \cite{hdf5})
 which allows read and write access to HDF5 file formats over MPI
 connected networks with tuning for particular HPC file systems such as
-Lustre \cite{lustre}.
+Lustre.
 
 HDF5 is not a streaming file format, but a highly structured,
 self-describing format intended for long-term accessibility and
@@ -376,8 +376,8 @@ NEST.
 Additionally, NESTProxy can be used as a generic tool for benchmarking
 I/O strategies in general, given that NEST is a leading neuronal
 network simulators with performance characteristics determined by the
-same constraints affecting other similar software packages (NEURON
-\cite{neuron}, Brian \cite{brian}, or Nengo \cite{nengo}).
+same constraints affecting other similar software packages (e.g., NEURON
+\cite{neuron} or Brian \cite{brian}).
 
 \section*{ACKNOWLEDGEMENTS}
 
@@ -402,21 +402,15 @@ Portfolio Theme "Supercomputing and Modeling for the Human Brain".
 %}
 
 \bibitem{neo}
-Garcia, Samuel and Guarino, Domenico and Jaillet, Florent and Jennings, Todd and Pr{\"o}pper, Robert and Rautenberg, Philipp L and Rodgers, Chris C and Sobolev, Andrey and Wachtler, Thomas and Yger, Pierre and others.
-\textit{NEO: an object model for handling electrophysiology data in multiple formats}.
-Frontiers in neuroinformatics, 2014.
+S.~Garcia et al.
+NEO: an object model for handling electrophysiology data in multiple formats.
+\textit{Frontiers in Neuroinformatics}, \textbf{10}:8, 2014.
 
 \bibitem{neuron}
-Hines, Michael L., and Nicholas T. Carnevale. \textit{The NEURON simulation environment}. Neural computation 9.6: 1179-1209, 1997.
+M.~L.~Hines, N.~T.~Carnevale. The NEURON simulation environment. \textit{Neural Computation} \textbf{9.6}: 1179--1209, 1997.
 
 \bibitem{brian}
-Goodman, Dan FM, and Romain Brette. \textit{The BRIAN simulator}. Frontiers in neuroscience 3.2: 192, 2009.
-
-\bibitem{nengo}
-Stewart, Terrence C., Bryan Tripp, and Chris Eliasmith. \textit{Python scripting in the Nengo simulator}. Frontiers in neuroinformatics 3, 2009.
-
-\bibitem{lustre}
-Braam, Peter J. \textit{The Lustre storage architecture}. (2004).
+D.~F.~M.~Goodman, R.~Brette. The Brian simulator. \textit{Frontiers in Neuroscience} \textbf{3.2}:192--197, 2009.
 
 % -------------------------------------------------------------------------------
 % Bibliography - example of book's reference
@@ -425,52 +419,48 @@ Braam, Peter J. \textit{The Lustre storage architecture}. (2004).
 %F.~Author, S.~Author, T.~Author. \textit{Title}. Publisher, Year.
 
 \bibitem{hdf5}
-HDF5 Home Page. The HDF Group and by the National Center for Supercomputing Applications. \textit{http://www.hdfgroup.org/HDF5/PHDF5}
+The HDF Group: HDF5 Home Page. \url{http://www.hdfgroup.org/HDF5/PHDF5}.
 
 \bibitem{neuroshare}
-Neuroshare Home Page. The Neuroshare Project. \textit{http://neuroshare.sourceforge.net}
+The Neuroshare Project: Neuroshare Home Page. \url{http://neuroshare.sourceforge.net}.
 
 % --------------------------------------------------------------------------------
 % Bibliography - example of journal's reference
 % --------------------------------------------------------------------------------
 \bibitem{NEST} %
 M.~Gewaltig, M.~Diesmann. NEST (NEural Simulation Tool). \textit{Scholarpedia} %
-\textbf{2}:1430, 2007.
+\textbf{2.4}:1430, 2007.
 
 % --------------------------------------------------------------------------------
 % Bibliography - example of proceedings' reference
 % --------------------------------------------------------------------------------
-\bibitem{Plesser07}
-H.~Plesser, J.~Eppler, A.~Morrison. Efficient Parallel Simulation of Large-Scale
-                  Neuronal Networks on Clusters of Multiprocessor
-                  Computers. In: \textit{Euro-Par 2007: Parallel Processing}, Berlin, Germany, 2007.
 
 \bibitem{frings2009scalable}
 W.~Frings, F.~Wolf, V.~Petkov. Scalable massively parallel I/O to task-local files.
- In: \textit{High Performance Computing Networking, Storage and Analysis, Proceedings of the Conference on}, Berlin, Germany, 2009.
+ In: \textit{Proceedings of the Conference on High Performance Computing, Networking, Storage and Analysis}, article No.~17, 2009.
 
 \bibitem{ScoreP}
-Andreas Kn\"upfer et al. Score--P --- A Joint Performance Measurement Run--Time Infrastructure for Periscope, Scalasca, TAU, and Vampir. In: \textit{Proc. of 5th Parallel Tools Workshop}, Dresden, Germany, 2011.
+Andreas Kn\"upfer et al. Score--P --- A Joint Performance Measurement Run--Time Infrastructure for Periscope, Scalasca, TAU, and Vampir. In: \textit{Proc. of 5th Parallel Tools Workshop}, pp.~79--91, 2012.
 
 \bibitem{NESTInitiative}
-  NEST initiative: The Neural Simulation Technology Initiative. \url{http://www.nest-initiative.org}.
+  NEST Initiative: The Neural Simulation Technology Initiative. \url{http://www.nest-initiative.org}.
 
 \bibitem{GPFS}
   F.~Schmuck, R.~Haskin. GPFS: A shared-disk file system for large computing clusters.
-  In: \textit{Proc. of the 2002 Conference on File and Storage Technologies}, pp.~231--244. 2002.
+  In: \textit{Proc. of the 2002 Conference on File and Storage Technologies}, pp.~231--244, 2002.
 
-\bibitem{stream}
-  ISO International Standard ISO/IEC 14882:2003 -- Programming Language C++.
-  \url{http://www.iso.org/iso/catalogue_detail.htm?csnumber=38110}.
-  American National Standards Institute, New York. 2003.
+% \bibitem{stream}
+%   ISO International Standard ISO/IEC 14882:2003 -- Programming Language C++.
+%   \url{http://www.iso.org/iso/catalogue_detail.htm?csnumber=38110}.
+%   American National Standards Institute, New York, 2003.
 
 \bibitem{gsd}
   S.~Kunkel, M.~Schmidt, J.~Eppler, H.~Plesser, G.~Masumoto, J.~Igarashi, S.~Ishii, T.~Fukai, A.~Morrison, M.~Diesmann, M.~Helias.
   Spiking network simulation code for petascale computers.
-  \textit{Frontiers in Neuroinformatics}. Vol 8, Article 78. October~10, 2014.
+  \textit{Frontiers in Neuroinformatics} \textbf{8}:78, 2014.
 
 \bibitem{morrison07}
-  A.~Morrison, A.~Aertsen, M.~Diesmann. Spike-timing-dependent plasticity in balanced random networks. \textit{Neural Computation} \textbf{19.6}:1437, 2007.
+  A.~Morrison, A.~Aertsen, M.~Diesmann. Spike-timing-dependent plasticity in balanced random networks. \textit{Neural Computation} \textbf{19.6}:1437--1467, 2007.
 
 % @INPROCEEDINGS{knuepfer:2011:scorep,
 %      author = {Kn{\"{u}}pfer, Andreas and R{\"{o}}ssel, Christian and an Mey, Dieter and Biersdorff, Scott and Diethelm, Kai and Eschweiler, Dominic and Geimer, Markus and Gerndt, Michael and Lorenz, Daniel and Malony, Allen D. and Nagel, Wolfgang E. and Oleynik, Yury and Philippen, Peter and Saviankou, Pavel and Schmidl, Dirk and Shende, Sameer S. and Tsch{\"{u}}ter, Ronny and Wagner, Michael and Wesarg, Bert and Wolf, Felix},
