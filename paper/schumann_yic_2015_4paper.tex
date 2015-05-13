@@ -28,7 +28,6 @@
   A. Peyser\authref{c},
   W. Schenck\authref{c},
   K. Thust\authref{b},
-  S. L\"uhrs\authref{b},
   J.M. Eppler\authref{c}
 }
 
@@ -101,20 +100,27 @@ simulation data from such a massively parallel application efficiently
 during runtime is essential for neuroscientific studies, but not a
 trivial task on a supercomputer with centralized storage.
 
-Virtual recording devices store neuronal properties such as spiking
-activity and membrane voltage to disk. With increasing numbers of
-devices and compute nodes, opening files and writing to them becomes a
-major bottleneck, thus requiring new I/O strategies.
+To record and store simulation data, NEST uses virtual recording devices. Right
+now, there exist spike detectors and multimeters in analogy to the devices used
+in real-world neurophysiological experiments. For every spike detector and
+multimeter defined as recording device in NEST, a single instance is created on
+each thread, and each of these instances writes its data via a particular C++
+standard stream to disk. For large-scale simulations with many threads
+distributed over many compute nodes, this I/O strategy is not well suited
+because of the large metadata overhead at the filesystem level, e.g.~alone the
+file creation can take up hours if a supercomputer like JUQUEEN is fully used.
 
-Until now, NEST has used the C++ standard I/O library to store
-simulation results to disk. In the case of large scale simulations on
-supercomputers, a huge number of virtual devices can request file
-access simultaneously, leading to write system calls becoming a
-significant element of overhead. We have therefore investigated
-possible performance gains by replacing the current I/O paradigm with
-calls to parallelized I/O libraries which could avoid serialization
-bottlenecks when interacting with underlying file systems such as GPFS
-\cite{GPFS} for highly parallel simulations.
+For this reason, NEST requires an alternative approach to file I/O, and this
+paper summarizes our efforts so far. An important part of these efforts is the
+specification and implementation of an \emph{NEST I/O proxy}. This proxy mimicks
+how NEST operates at the I/O level without actually executing a full simulation.
+More specifically, it generates data writing patterns similar to full NEST, but
+just with fake data. Thus, a large part of the computational costs of full NEST
+simulations can be avoided while developing new I/O backends for NEST. Using
+this proxy, we investigated possible performance gains by replacing the current
+I/O paradigm with calls to parallelized I/O libraries which could avoid
+serialization bottlenecks when interacting with underlying file systems such as
+GPFS \cite{GPFS} for highly parallel simulations.
 
 \section{Requirements for the I/O interface}
 
@@ -438,7 +444,7 @@ Andreas Kn\"upfer et al. Score--P --- A Joint Performance Measurement Run--Time 
   In: \textit{Proc. of the 2002 Conference on File and Storage Technologies}, pp.~231--244. 2002.
 
 \bibitem{stream}
-  ISO International Standard ISO/IEC 14882:2003 -- Programming Language C++. 
+  ISO International Standard ISO/IEC 14882:2003 -- Programming Language C++.
   \url{http://www.iso.org/iso/catalogue_detail.htm?csnumber=38110}.
   American National Standards Institute, New York. 2003.
 
