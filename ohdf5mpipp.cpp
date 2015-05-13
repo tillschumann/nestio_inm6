@@ -5,7 +5,7 @@
 #include <omp.h>
 
 
-OHDF5mpipp::OHDF5mpipp(std::string filename, int buf_size, nestio::LoggerType logger_type)
+OHDF5mpipp::OHDF5mpipp(std::string filename, int buf_size, nestio::Logger_type logger_type)
 : buf_size(buf_size), RANK(2), logger_type(logger_type)
 {
 	//Init HDF5 file

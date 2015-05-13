@@ -1,9 +1,17 @@
+#ifndef NESTIOPROXY
+#include "config.h"
+#endif
+
+#ifdef HAVE_MPI
 #include <mpi.h>
+#endif /* #ifdef HAVE_MPI */
+
 #include <omp.h>
+
+#ifdef HAVE_SIONLIB
+
 #include <sion.h>
 #include <vector>
-#include "Multimeter.h"
-#include "SpikeDetector.h"
 #include "abstract_logger.h"
 
 #ifndef SIONLIBLOGGER_CLASS
@@ -31,9 +39,9 @@ struct SionFileHeader
 class SionBuffer
 {
 private:
+  char* buffer;
   int ptr;
   int max_size;
-  char* buffer;
 public:
   SionBuffer(): buffer(NULL), ptr(0), max_size(0)
   {}
@@ -130,7 +138,7 @@ class Sionlib_logger : public ILogger
 		SionBuffer* buffer_spike;
 		
 		struct Parameters_ {
-		    nestio::LoggerType loggerType_;
+		    nestio::Logger_type loggerType_;
 		    double T_;
 		    double Tresolution_;
 		    
@@ -147,26 +155,16 @@ class Sionlib_logger : public ILogger
 		    * @param Default value for withtime property
 		    * @param Default value for withgid property
 		    */
-		    Parameters_(const std::string&, const std::string&, nestio::LoggerType, int, sion_int64);
+		    Parameters_(const std::string&, const std::string&, nestio::Logger_type, int, sion_int64);
 
 		    //void get(const AsciiLogger2&, DictionaryDatum&) const;  //!< Store current values in dictionary
-		    //void set(const AsciiLogger2&, const Buffers_&, const DictionaryDatum&);  //!< Set values from dicitonary
+		    #ifndef NESTIOPROXY	
+		    void set(const DictionaryDatum&);  //!< Set values from dicitonary
+		    #endif
 		  };
 		  
 		  Parameters_ P_;
-		
-	public:
-		Sionlib_logger(): P_(".",".log", nestio::Standard, 100, 100) {};
-		Sionlib_logger(const std::string&, const std::string&, int, sion_int64, nestio::LoggerType);
-		~Sionlib_logger();
-		
-		void syncronize(const double& t);
-		void initialize(const double T);
-		void finalize();
-		
-		void record_spike(int spikedetector_id, int neuron_id, int timestamp);
-		void record_multi(int multimeter_id, int neuron_id, int timestamp, const std::vector<double_t>& data);
-		
+		  
 		void srecord_spike(int spikedetector_id, int neuron_id, int timestamp);
 		void srecord_multi(int multimeter_id, int neuron_id, int timestamp, const std::vector<double_t>& data);
 		
@@ -176,11 +174,29 @@ class Sionlib_logger : public ILogger
 		void crecord_spike(int spikedetector_id, int neuron_id, int timestamp);
 		void crecord_multi(int multimeter_id, int neuron_id, int timestamp, const std::vector<double_t>& data);
 		
-		void signup_spike(int id, int neuron_id, int expectedSpikeCount);
+		
+	public:
+		Sionlib_logger();
+		Sionlib_logger(const std::string&, const std::string&, int, sion_int64, nestio::Logger_type);
+		~Sionlib_logger();
+		
+		void synchronize(const double& t);
+		void initialize(const double T);
+		void finalize();
+		
+		#ifndef NESTIOPROXY
+		void set_status(const DictionaryDatum &);
+		#endif
+		void record_spike(int spikedetector_id, int neuron_id, int timestamp);
+		void record_multi(int multimeter_id, int neuron_id, int timestamp, const std::vector<double_t>& data);
+		
+		void signup_spike(int id, int neuron_id);
 		void signup_multi(int id, int neuron_id, double sampling_interval, std::vector<Name> valueNames);
 		
 };
 
 extern std::ostream& operator << (std::ostream &o, const Sionlib_logger &l);
 
-#endif
+#endif //SIONLIBLOGGER_CLASS
+
+#endif //HAVE_SIONLIB

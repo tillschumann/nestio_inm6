@@ -47,7 +47,8 @@ class NESTProxy
 		  sleeptimer[omp_get_thread_num()].start();
 		  int s = (int)dist->getValue();
 		  //std::cout << "sleep " << s << std::endl;
-		  usleep(s);
+		  if (s>0)
+		    usleep(s);
 		  sleeptimer[omp_get_thread_num()].pause();
 		}
 		
@@ -56,7 +57,8 @@ class NESTProxy
 		  delivertimer[omp_get_thread_num()].start();
 		  int s = (int)conf.deadTimeDeliver->getValue();
 		  //std::cout << "sleep " << s << std::endl;
-		  usleep(s);
+		  if (s>0)
+		    usleep(s);
 		  delivertimer[omp_get_thread_num()].stop();
 		}
 
@@ -110,10 +112,10 @@ class NESTProxy
 			
 			#pragma omp parallel 
 			{
-			    conf.numberOfSpikeDetectorsPerThread->init();
-			    conf.numberOfMultimetersPerThread->init();
-			    conf.samplingIntervalsOfMeter->init();
-			    conf.numberOfValuesWrittenByMeter->init();
+			    nestio::IDistribution* numberOfSpikeDetectorsPerThread = conf.numberOfSpikeDetectorsPerThread->copy_init();
+			    nestio::IDistribution* samplingIntervalsOfMeter = conf.samplingIntervalsOfMeter->copy_init();
+			    nestio::IDistribution* numberOfValuesWrittenByMeter = conf.numberOfValuesWrittenByMeter->copy_init();
+			    nestio::IDistribution* numberOfMultimetersPerThread = conf.numberOfMultimetersPerThread->copy_init();
 			    
 			    int thread_num = omp_get_thread_num();
 			    bool spikedetector_config_for_thread = (conf.spikedetector_configs.find(nestio::getThreadHash())!=conf.spikedetector_configs.end());
@@ -121,15 +123,16 @@ class NESTProxy
 			    if (spikedetector_config_for_thread)
 			      nosdpt = conf.spikedetector_configs[nestio::getThreadHash()].size();
 			    else
-			      nosdpt = conf.numberOfSpikeDetectorsPerThread->getIntValue();
+			      nosdpt = numberOfSpikeDetectorsPerThread->getIntValue();
 			    
 			    bool multimeter_config_for_thread = conf.multimeter_configs.find(nestio::getThreadHash())!=conf.multimeter_configs.end();
 			    int nompt;
-			    if (multimeter_config_for_thread)
+			    if (multimeter_config_for_thread) {
 			      nompt = conf.multimeter_configs[nestio::getThreadHash()].size();
-			    else
-			      nompt = conf.numberOfMultimetersPerThread->getIntValue();
-			    
+			    }
+			    else {
+			      nompt = numberOfMultimetersPerThread->getIntValue();
+			    }
 			    
 			    #pragma omp critical 
 			    {
@@ -141,10 +144,12 @@ class NESTProxy
 			    for (int i=0;i<nosdpt;i++) {
 			      
 				SpikeDetector* spikeDetector = new SpikeDetector(neuron_id_offset+i, &logger);
-				if (spikedetector_config_for_thread)
-				  spikeDetector->connect2Neuron(neuron_id_offset+i,conf.spikedetector_configs[nestio::getThreadHash()].at(i).spikesPerDector);
-				else
-				  spikeDetector->connect2Neuron(neuron_id_offset+i,conf.spikesPerDector);
+				if (spikedetector_config_for_thread) {
+				  spikeDetector->connect2Neuron(neuron_id_offset+i,conf.spikedetector_configs[nestio::getThreadHash()].at(i).spikesPerDector->copy_init());
+				}
+				else {
+				  spikeDetector->connect2Neuron(neuron_id_offset+i,conf.spikesPerDector->copy_init());
+				}
 				spikeDetector->singup();
 				spikeDetectors[thread_num].push_back(spikeDetector);
 			    }
@@ -159,8 +164,8 @@ class NESTProxy
 				  multimeter = new Multimeter(multimeter_id_offset+i, interval, simSettings, conf.multimeter_configs[nestio::getThreadHash()].at(i).numberOfValuesWritten->getIntValue(), &logger);
 				}
 				else {
-				  interval = conf.samplingIntervalsOfMeter->getValue();
-				  multimeter = new Multimeter(multimeter_id_offset+i, interval, simSettings, conf.numberOfValuesWrittenByMeter->getIntValue(), &logger);
+				  interval = samplingIntervalsOfMeter->getValue();
+				  multimeter = new Multimeter(multimeter_id_offset+i, interval, simSettings, numberOfValuesWrittenByMeter->getIntValue(), &logger);
 
 				}
 				multimeter->connect2Neuron(multimeter_id_offset+i);

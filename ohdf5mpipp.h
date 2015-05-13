@@ -158,7 +158,7 @@ class OHDF5mpipp : public ILogger
 		std::vector<int> values;
 		
 		
-		nestio::LoggerType logger_type;
+		nestio::Logger_type logger_type;
 		oHDF5Buffer* buffer_multi;
 		oHDF5Buffer* buffer_spike;
 		
@@ -189,7 +189,7 @@ class OHDF5mpipp : public ILogger
 		
 	public:
 		OHDF5mpipp() {};
-		OHDF5mpipp(std::string, int, nestio::LoggerType logger_type);
+		OHDF5mpipp(std::string, int, nestio::Logger_type logger_type);
 		~OHDF5mpipp();
 		//void write(int* data);
 		//void newDataSet(std::string, const int, const int);

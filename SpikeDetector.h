@@ -51,8 +51,10 @@ public:
   
   void singup()
   { 
-    for (int i=0; i<neuron_ids.size(); i++)
-      logger->signup_spike(spikedetector_id, neuron_ids.at(i),1000);
+    for (int i=0; i<neuron_ids.size(); i++) {
+      //spikes_dists.at(i).init();
+      logger->signup_spike(spikedetector_id, neuron_ids.at(i));
+    }
     isSinup = true;
   }
   
@@ -61,6 +63,7 @@ public:
       for (int n=0; n<neuron_ids.size(); n++) {
 	//std::cout << "update SpikeDetector " << neuron_ids.at(n) << std::endl;
 	int spikes = (int)spikes_dists.at(n)->getValue();
+	std::cout << "spikes=" << spikes << std::endl; 
 	for (int i=0; i<spikes; i++) {
 	  #ifdef _DEBUG_MODE
 	    std::cout << "record_spike" << std::endl;

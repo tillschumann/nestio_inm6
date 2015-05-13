@@ -185,20 +185,21 @@ int main(int argc, char *argv[])
 	int threadNumber=omp_get_thread_num();
 	
 	nestio::SimSettings simSettings;
-	simSettings.T=10.0;
+	simSettings.T=100.0;
 	simSettings.Tresolution=0.1;
 	
 	nestio::Configuration conf;
-	conf.logger = nestio::HDF5;
+	conf.logger = nestio::ASCII;
 	conf.bufferSize = 2400;
 	conf.numberOfThreads=new nestio::FixIntValue(numberOfThreads); //must not be changed
 	conf.numberOfSpikeDetectorsPerThread=new nestio::FixIntValue(2);
-	conf.spikesPerDector = new nestio::FixIntValue(5);
+	//conf.spikesPerDector = new nestio::FixIntValue(2);
+	conf.spikesPerDector = new nestio::StandardDistribution(4.1,2.5);
 	conf.numberOfMultimetersPerThread= new nestio::FixIntValue(0);
 	conf.samplingIntervalsOfMeter = new nestio::FixDoubleValue(0.05);
 	conf.deadTimeSpikeDetector = new nestio::FixIntValue(35);
 	conf.deadTimeMultimeters = new nestio::FixIntValue(35);
-	conf.deadTimeDeliver = new nestio::FixIntValue(117426);
+	conf.deadTimeDeliver = new nestio::FixIntValue(10);
 	conf.numberOfValuesWrittenByMeter = new nestio::FixIntValue(1);
 	
 	

@@ -30,6 +30,7 @@ namespace nestio
     virtual int getIntValue() {}
     virtual double getValue() {}
     virtual void write_info(std::ostream &o) const {}
+    virtual IDistribution* copy_init() {}
   };
   class StandardDistribution : public IDistribution
   {
@@ -72,7 +73,7 @@ namespace nestio
     }
     int getIntValue()
     {
-      return (int)getValue();
+      return (int)round(getValue());
     }
     double getValue()
     {
@@ -90,6 +91,14 @@ namespace nestio
     {
       o << "StandardDistribution_" << mean << "_" << var;
     }
+    IDistribution* copy_init()
+    {
+	StandardDistribution* copy = new StandardDistribution();
+	*copy = *this;
+	copy->init();
+	return copy;
+    }
+    
     StandardDistribution & operator= (const StandardDistribution & other)
     {
       if (other.eng != NULL)
@@ -142,7 +151,7 @@ namespace nestio
     }
     int getIntValue()
     {
-      return (int)getValue();
+      return (int)round(getValue());
     }
     double getValue()
     {
@@ -151,6 +160,13 @@ namespace nestio
     void write_info(std::ostream &o) const
     {
       o << "PoissonDistribution_" << lambda;
+    }
+    IDistribution* copy_init()
+    {
+	PoissonDistribution* copy = new PoissonDistribution();
+	*copy = *this;
+	copy->init();
+	return copy;
     }
     PoissonDistribution & operator= (const PoissonDistribution & other)
     {
@@ -206,7 +222,7 @@ namespace nestio
     }
     int getIntValue()
     {
-      return (int)getValue();
+      return (int)round(getValue());
     }
     double getValue()
     {
@@ -215,6 +231,13 @@ namespace nestio
     void write_info(std::ostream &o) const
     {
       o << "BinominalDistribution_" << t << "_" << p;
+    }
+    IDistribution* copy_init()
+    {
+	BinominalDistribution* copy = new BinominalDistribution();
+	*copy = *this;
+	copy->init();
+	return copy;
     }
     BinominalDistribution & operator= (const BinominalDistribution & other)
     {
@@ -242,7 +265,7 @@ namespace nestio
     void init(double alpha=1.0) {}
     int getIntValue()
     {
-      return (int)v;
+      return (int)round(v);
     }
     double getValue()
     {
@@ -256,6 +279,13 @@ namespace nestio
     {
       v = other.v;
     } 
+    IDistribution* copy_init()
+    {
+	FixDoubleValue* copy = new FixDoubleValue();
+	*copy = *this;
+	copy->init();
+	return copy;
+    }
   };
   
   class FixIntValue : public IDistribution
@@ -285,6 +315,13 @@ namespace nestio
     {
       v = other.v;
     }
+    IDistribution* copy_init()
+    {
+	FixIntValue* copy = new FixIntValue();
+	*copy = *this;
+	copy->init();
+	return copy;
+    }
   };
   
   
@@ -295,7 +332,7 @@ namespace nestio
   };
   
   enum Loggers {SIONLIB, SIONLIB_BUFFERED, SIONLIB_COLLECTIVE, HDF5, oHDF5, oHDF5_BUFFERED, oHDF5_COLLECTIVE, ASCII};
-  enum LoggerType {Standard, Buffered, Collective};
+  enum Logger_type {Standard, Buffered, Collective};
   
   extern std::ostream& operator << (std::ostream &o, const nestio::Loggers &l);
   

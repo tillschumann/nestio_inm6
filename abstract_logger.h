@@ -26,7 +26,7 @@ public:
   
   
   
-  virtual void signup_spike(int id, int neuron_id, int expectedSpikeCount) {}
+  virtual void signup_spike(int id, int neuron_id) {}
   virtual void signup_multi(int id, int neuron_id, double sampling_interval, std::vector<Name> valueNames) {}
   
   virtual void syncronize(const double& t) {}
