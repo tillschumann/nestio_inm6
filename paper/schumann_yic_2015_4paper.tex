@@ -126,8 +126,8 @@ GPFS \cite{GPFS} for highly parallel simulations.
 
 NEST is used for a large variety of use cases, each having different
 requirements on efficiency and output file formats. To make the I/O of
-NEST more flexible, an interface wass developed which connects the
-virtual devices with the I/O libraries. Taking into account that some
+NEST more flexible, an interface was developed which connects the
+virtual recording devices with the I/O libraries. Taking into account that some
 of the libraries use parallel I/O, the interface contains
 synchronization functions besides the usual open, close and write
 functions. These synchronization function allows inter-node
@@ -143,21 +143,34 @@ function is called simultaneously on all nodes.
 
 \subsection{Use cases of NEST}
 
-\pleasewrite{Jochen}{the random balanced network and the reduced model of the visual
-cortex}
-\begin{itemize}
-  \item{Random balanced network: Dry-run simulation for M=32, T=16, N=300,000, mean firing frequ. of 7 Hz}
-  \item{Microcircuit model: Real simulation of only one area, run over 1000.0 ms: \\
-- Number of MPI processes: 32\\
-- Number of threads per MPI process: 8\\
-- Number of virtual processes (VPs): 256 (32x8)\\
-- Number of spike detectors per VP: 8\\
-- Number of neurons attached to each spike detector: 10000/256 (ca.)\\
-- Number of multimeters per VP: 8\\
-- Number of neurons attached to each multimeter: 500/256\\
-- MinDelay interval: Most likely equal to h step (= 0.1 ms)\\
-- Overall number of neurons in the network: 80,000}
-\end{itemize}
+For our benchmarking and development, we took two typical use cases,
+i.e.~simulation tasks, into consideration. The first one is the simulation of a
+random balanced network \cite{morrison07} which is typically used for
+benchmarking, the second the simulation of a single area of a newly developed
+NEST model of the visual cortex. The latter use case comes very close to
+production runs which are carried out with NEST in the neuroscience community.
+\pleasewrite{Jochen}{Is there already any citable reference for the vis.cortex
+model? We can also say that this is a microcircuit since one area is just a
+single microcircuit and then we cite the microcircuit paper?}
+For our testing, the random balanced network was run on a single compute node of
+the supercomputer JUQUEEN, being split over 16 threads, while the simulation of
+the visual cortex area was distributed over 32 compute nodes on JUQUEEN with
+eight threads each; the overall number of neurons amounted to 80,000. Both spike
+detectors and multimeters were used as recording devices.
+
+% \begin{itemize}
+%   \item{Random balanced network: Dry-run simulation for M=32, T=16, N=300,000, mean firing frequ. of 7 Hz}
+%   \item{Microcircuit model: Real simulation of only one area, run over 1000.0 ms: \\
+% - Number of MPI processes: 32\\
+% - Number of threads per MPI process: 8\\
+% - Number of virtual processes (VPs): 256 (32x8)\\
+% - Number of spike detectors per VP: 8\\
+% - Number of neurons attached to each spike detector: 10000/256 (ca.)\\
+% - Number of multimeters per VP: 8\\
+% - Number of neurons attached to each multimeter: 500/256\\
+% - MinDelay interval: Most likely equal to h step (= 0.1 ms)\\
+% - Overall number of neurons in the network: 80,000}
+% \end{itemize}
 
 \section{An I/O proxy to ease development}
 
@@ -453,6 +466,8 @@ Andreas Kn\"upfer et al. Score--P --- A Joint Performance Measurement Run--Time 
   Spiking network simulation code for petascale computers.
   \textit{Frontiers in Neuroinformatics}. Vol 8, Article 78. October~10, 2014.
 
+\bibitem{morrison07}
+  A.~Morrison, A.~Aertsen, M.~Diesmann. Spike-timing-dependent plasticity in balanced random networks. \textit{Neural Computation} \textbf{19.6}:1437, 2007.
 
 % @INPROCEEDINGS{knuepfer:2011:scorep,
 %      author = {Kn{\"{u}}pfer, Andreas and R{\"{o}}ssel, Christian and an Mey, Dieter and Biersdorff, Scott and Diethelm, Kai and Eschweiler, Dominic and Geimer, Markus and Gerndt, Michael and Lorenz, Daniel and Malony, Allen D. and Nagel, Wolfgang E. and Oleynik, Yury and Philippen, Peter and Saviankou, Pavel and Schmidl, Dirk and Shende, Sameer S. and Tsch{\"{u}}ter, Ronny and Wagner, Michael and Wesarg, Bert and Wolf, Felix},
