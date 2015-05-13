@@ -137,7 +137,9 @@ function is called simultaneously on all nodes.
 \begin{figure}[htbp]
 \centering %
 \includegraphics[scale=0.5]{loggerinterface.eps}
-\caption{Interface class of the logger}
+\caption{ILogger is the implemented I/O interface for the virtual recording devices. 
+Three differenct logger interfaces are available: \emph{ASCIILogger} (see section \ref{sec:ascii}),
+\emph{SIONLogger} (see section \ref{sec:sionlib}) and \emph{HDF5Logger} (see section \ref{sec:hdf5})}
 \label{fig:loggerinterface}
 \end{figure}
 
@@ -245,7 +247,7 @@ During the update function each \emph{Spikedetector} or
 \emph{Multimeter} object calls one or multiple write functions,
 depending on its distribution variable.
 
-The random implementation is based on the \emph{C++11} standard library.
+%The random implementation is based on the \emph{C++11} standard library.
 \begin{table}[htdp]
 \caption{Stochastical parameters, which are input parameters of the NESTProxy}
 \centering
@@ -254,10 +256,13 @@ The random implementation is based on the \emph{C++11} standard library.
 \textbf{Type} & \textbf{Name}                   & \textbf{Description} \\ \hline
 Integer       & numberOfSpikeDetectorsPerThread & number of SpikeDetectors per thread  \\
 Integer       & numberOfMultimetersPerThread    & number of Multimeters per thread  \\
-Distribution  & spikesPerDetector               & number of spikes generated at each SpikeDetector per iteration  \\
+Distribution  & spikesPerDetector               & number of spikes generated at each \\
+	      &					& SpikeDetector per iteration  \\
 Distribution  & samplingIntervalsOfMeter        & sampling interval of the Multimeters  \\
-Distribution  & numberOfValuesWrittenByMeter    & number of written values by each Multimeter in sampling interval  \\
-Distribution  & deadTimeUpdate                  & sleeping timings between SpikeDetector and Multimeters writing operations \\
+Distribution  & numberOfValuesWrittenByMeter    & number of written values by each \\
+	      &					& Multimeter in sampling interval  \\
+Distribution  & deadTimeUpdate                  & sleeping timings between SpikeDetector \\
+	      &					& and Multimeters writing operations \\
 Distribution  & deadTimeDeliver                 & sleeping time in deliver function  \\
 \hline\hline
 \end{tabular}
@@ -271,7 +276,7 @@ Based on the interface described above different drivers are
 implemented.
 
 \subsection{ASCII}
-
+\label{sec:ascii}
 Current versions of NEST use the standard C++ I/O stream library
 \cite{stream} to permanently store results as plain text files
 containing information as time stamps as floating point strings. The
@@ -282,12 +287,10 @@ self-descriptive nature.
 However for large-scale simulations, this leads to: 1) excessively
 large amounts of data written to disk which is both a performance
 issue and a practical storage problem; 2) a serialization bottleneck
-when opening a separate file per process; and 3) a serialization
+when opening a separate file per virtual recording device; and 3) a serialization
 bottleneck for metadata updates in the file system when new blocks are
 allocated.
-
-\pleasewrite{Till}{Is the ASCII driver using shared file I/O or
-  task-local? Depending on that the problems with metadata change}
+\pleasewrite{Alex}{The ASCII driver has for each virtual recording device a file. The virtual recording devices live on the task.}
 
 One solution used in recent releases of NEST has been the global spike
 detector \cite{gsd}: a single file is opened by a dedicated rank to
@@ -311,7 +314,7 @@ the current interface to a common API in the context of SIONlib and
 HDF5 interfaces.
 
 \subsection{SIONlib}
-
+\label{sec:sionlib}
 SIONlib \cite{frings2009scalable} is a library which addresses most of
 the common problems that arise from large scale parallel I/O. Its API
 resembles task-local file I/O which makes it easy to replace the
@@ -332,7 +335,7 @@ is potentially the case for NEST. Hence for this case the collective
 writes in SIONlib is preferable.
 
 \subsection{HDF5}
-
+\label{sec:hdf5}
 HDF5 is an API to commonly used file formats in the neuroscience
 community, such as NEO \cite{neo} and Neuroshare \cite{neuroshare}.
 Since they use a common binary layout and API, data can be accessed
