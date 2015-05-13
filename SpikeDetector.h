@@ -63,7 +63,6 @@ public:
       for (int n=0; n<neuron_ids.size(); n++) {
 	//std::cout << "update SpikeDetector " << neuron_ids.at(n) << std::endl;
 	int spikes = (int)spikes_dists.at(n)->getValue();
-	std::cout << "spikes=" << spikes << std::endl; 
 	for (int i=0; i<spikes; i++) {
 	  #ifdef _DEBUG_MODE
 	    std::cout << "record_spike" << std::endl;

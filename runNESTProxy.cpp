@@ -192,15 +192,14 @@ int main(int argc, char *argv[])
 	conf.logger = nestio::ASCII;
 	conf.bufferSize = 2400;
 	conf.numberOfThreads=new nestio::FixIntValue(numberOfThreads); //must not be changed
-	conf.numberOfSpikeDetectorsPerThread=new nestio::FixIntValue(2);
-	//conf.spikesPerDector = new nestio::FixIntValue(2);
+	conf.numberOfSpikeDetectorsPerThread=new nestio::FixIntValue(8);
 	conf.spikesPerDector = new nestio::StandardDistribution(4.1,2.5);
-	conf.numberOfMultimetersPerThread= new nestio::FixIntValue(0);
-	conf.samplingIntervalsOfMeter = new nestio::FixDoubleValue(0.05);
-	conf.deadTimeSpikeDetector = new nestio::FixIntValue(35);
-	conf.deadTimeMultimeters = new nestio::FixIntValue(35);
-	conf.deadTimeDeliver = new nestio::FixIntValue(10);
-	conf.numberOfValuesWrittenByMeter = new nestio::FixIntValue(1);
+	conf.numberOfMultimetersPerThread= new nestio::FixIntValue(8);
+	conf.samplingIntervalsOfMeter = new nestio::FixDoubleValue(0.1);
+	conf.deadTimeSpikeDetector = new nestio::FixIntValue(35); //
+	conf.deadTimeMultimeters = new nestio::FixIntValue(35); //
+	conf.deadTimeDeliver = new nestio::FixIntValue(100); //
+	conf.numberOfValuesWrittenByMeter = new nestio::FixIntValue(4);
 	
 	
 	//std::vector<nestio::Multimeter_Config> m_list_1_1(1);
