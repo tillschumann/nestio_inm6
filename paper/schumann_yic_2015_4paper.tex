@@ -28,6 +28,7 @@
   A. Peyser\authref{c},
   W. Schenck\authref{c},
   K. Thust\authref{b},
+  S. L\"uhrs\authref{b},
   J.M. Eppler\authref{c}
 }
 
@@ -266,6 +267,9 @@ when opening a separate file per process; and 3) a serialization
 bottleneck for metadata updates in the file system when new blocks are
 allocated.
 
+\pleasewrite{Till}{Is the ASCII driver using shared file I/O or
+  task-local? Depending on that the problems with metadata change}
+
 One solution used in recent releases of NEST has been the global spike
 detector \cite{gsd}: a single file is opened by a dedicated rank to
 store spiking events, a low cost solution since currently all ranks
@@ -284,11 +288,29 @@ We will use an ``ASCII'' driver, though, as a benchmark to compare
 other approaches, as a robust backup for debugging and validating
 other drivers, and as a legacy interface allowing backwards
 compatibility. This requirement has required us to begin abstracting
-the current interface to a common API in the context of SIONLIB and
+the current interface to a common API in the context of SIONlib and
 HDF5 interfaces.
 
-\subsection{SIONLIB}
-\pleasewrite{Kay}{sionlib advantages}
+\subsection{SIONlib}
+
+SIONlib \cite{frings2009scalable} is a library which addresses most of
+the common problems that arise from large scale parallel I/O. Its API
+resembles task-local file I/O which makes it easy to replace the
+existing ASCII driver in NEST.
+
+Compared to HDF5 SIONlib's API is simpler since it does not describe
+the data that is written, but only offers an interface for writing
+byte steams, similar to ANSI-C. In general it focuses on performance
+and simplicity and leaves the interpretation of the data to the user.
+
+The most common write strategy in SIONlib only uses collective
+operations to open and close files while the read and write calls are
+independent and do not need any communication. This method is highly
+scalable but uses file system block alignment to achieve better
+performance and thus results in a significant amount of unused space
+for scenarios where the volume of data per task is very small, which
+is potentially the case for NEST. Hence for this case the collective
+writes in SIONlib is preferable.
 
 \subsection{HDF5}
 
@@ -314,7 +336,7 @@ writing seen with the ASCII driver.
 
 Therefore, for large neuronal networks simulated in NEST, we have
 found it difficult to produce performance similar to what we have done
-with SIONLIB.
+with SIONlib.
 
 \section{Benchmarking and statistical analysis}
 
