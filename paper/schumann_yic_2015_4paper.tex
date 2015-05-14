@@ -298,14 +298,16 @@ writes in SIONlib are preferable.
 
 \subsection{Benchmark simulations}\label{sect:use_cases}
 
-For benchmarking, we used two typical simulation tasks. First, the
+For benchmarking,
+we used two typical simulation tasks. First, the
 simulation of a random balanced network \cite{morrison07}, second the
 microcircuit model of a cubic millimeter of cortex \cite{potjans14}.
 The first has very balanced I/O requirements, while the latter is very
 close to typical production runs carried out by the neuroscience
 community.
 
-For our tests, the random balanced network was run on a single compute
+To collect runtime data for the parametrization of the NEST I/O proxy,
+the random balanced network was run on a single compute
 node of the supercomputer JUQUEEN, being split over 16 threads, while
 the simulation of the microcircuit model was distributed over 32
 compute nodes on JUQUEEN with eight threads each; the overall number
@@ -316,7 +318,7 @@ were used as recording devices.
 
 \pleasewrite{Till}{Please add benchmark results here. Short intro text
   plus two plots, one for each benchmark situation, each containing
-  three performance curves. Short caption to explain the figures.}
+  three performance curves. Short caption to explain the figures. Write explicitly that the benchmarks were generated on Hambach, give a concise description of this machine, e.g. ``Intel Xeon cluster with xxx compute nodes''.}
 
 Mimicking the two simulation tasks described above with the NEST I/O proxy, we obtained
 the benchmark results shown in Fig.~\ref{fig:xxx}.
