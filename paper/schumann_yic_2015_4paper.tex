@@ -90,7 +90,7 @@
 Over the past 20 years, the NEST Initiative \cite{NESTInitiative} has
 developed the NEST simulator \cite{NEST} for spiking neural network
 models. It is used in computational neuroscience to simulate the
-dynamics of the interaction between nerve cells. The same cod base is
+dynamics of the interaction between nerve cells. The same code base is
 used to simulate small networks on local machines up to large
 brain-scale circuits using the full capabilities of the world's
 leading supercomputers. The basis of this flexibility is a hybrid
@@ -105,6 +105,18 @@ with many threads distributed over many compute nodes, this I/O
 strategy fails, because of the large metadata overhead at the
 filesystem level, e.g.~file creation alone can take up hours if a
 supercomputer like JUQUEEN is fully used.
+
+One solution used in recent releases of NEST has been the global spike
+detector \cite{gsd}: a single file is opened by a dedicated MPI rank to
+store spiking events, a low cost solution since currently all ranks
+see all spike events through MPI collective communication.
+On the other hand, the global spike detector has several long-term
+consequences: 1) it constitutes a serialization bottleneck as spike
+event I/O is handled by a single rank only without using all available
+processors; 2) it is a design constraint requiring all spikes being
+globally available, which may not be scalable; and 3) it is
+inapplicable to more voluminous data (e.g. membrane potentials), which
+is too much to be shipped to a single I/O node.
 
 To overcome these problems, NEST requires an alternative approach to
 file I/O. An important part of our efforts in this direction is the
@@ -152,13 +164,37 @@ To generate reliable timing measurements of the runtime behavior, part
 of the NEST code, in particular the functions of the virtual recording
 devices and within them the calls to lower-level I/O functions, were
 manually instrumented with Score-P \cite{ScoreP}.
-
+%
 We used the instrumented NEST binary to generate trace data for the
-two use cases described above. From the trace data, we derived
+two use cases described in Sect.~\ref{sect:use_cases}.
+From the trace data, we derived
 statistical measures which describe the runtime behavior of NEST,
 e.g.~the distribution of onsets of spike writing in each thread
 relative to the start of the update phase in the main simulation cycle
 of NEST.
+
+\begin{table}[b]
+\caption{Parameters which influence the I/O behavior of the proxy}
+\centering
+\begin{tabular}{lll}
+\hline\hline
+\textbf{Name}                   & \textbf{Type} & \textbf{Description} \\ \hline
+numberOfSpikeDetectorsPerThread & Integer       & number of Spike detectors per thread  \\
+numberOfMultimetersPerThread    & Integer       & number of Multimeters per thread  \\
+spikesPerDetector               & Distribution  & number of spikes generated at each \\
+        &           & Spike detector per iteration  \\
+samplingIntervalsOfMeter        & Distribution  & sampling interval of the Multimeters  \\
+numberOfValuesWrittenByMeter    & Distribution  & number of written values by each \\
+        &           & Multimeter in sampling interval  \\
+deadTimeUpdate                  & Distribution  & sleeping timings between Spike detectors' \\
+        &           & and Multimeters' writing operations \\
+deadTimeDeliver                 & Distribution  & sleeping time in deliver function  \\
+\hline\hline
+\end{tabular}
+\label{tab:table-silva1}
+\caption{Input parameters of the NEST I/O proxy. Following distributions
+  are implemented: Normal, Poisson, Binominal and fixed values.}
+\end{table}
 
 \subsection{Working principles of the proxy}
 
@@ -174,37 +210,7 @@ distribution \emph{deadTimeUpdate}. During the update function each
 \emph{Spike detector} or \emph{Multimeter} object calls one or more
 write functions.
 
-\begin{table}[htdp]
-\caption{Parameters which influence the I/O behavior of the proxy}
-\centering
-\begin{tabular}{lll}
-\hline\hline
-\textbf{Name}                   & \textbf{Type} & \textbf{Description} \\ \hline
-numberOfSpikeDetectorsPerThread & Integer       & number of Spike detectors per thread  \\
-numberOfMultimetersPerThread    & Integer       & number of Multimeters per thread  \\
-spikesPerDetector               & Distribution  & number of spikes generated at each \\
-				& 	        & Spike detector per iteration  \\
-samplingIntervalsOfMeter        & Distribution  & sampling interval of the Multimeters  \\
-numberOfValuesWrittenByMeter    & Distribution  & number of written values by each \\
-				& 	        & Multimeter in sampling interval  \\
-deadTimeUpdate                  & Distribution  & sleeping timings between Spike detectors \\
-				& 	        & and Multimeters writing operations \\
-deadTimeDeliver                 & Distribution  & sleeping time in deliver function  \\
-\hline\hline
-\end{tabular}
-\label{tab:table-silva1}
-\caption{Input parameters of the NEST I/O proxy. Following distributions
-  are implemented: Normal, Poisson, Binominal and fixed values}
-\end{table}
-
-\subsection{Basic I/O driver interface}
-
-To provide maximum flexibility regarding the output format and support
-all use cases of NEST, an interface was developed that connects the
-virtual recording devices with and allows the selection of different
-I/O libraries.
-
-\begin{figure}[htbp]
+\begin{figure}[tb]
 \centering %
 \includegraphics[scale=0.5]{loggerinterface.eps}
 \caption{ILogger implements the I/O interface for the virtual
@@ -213,6 +219,14 @@ I/O libraries.
   \emph{HDF5Logger} (see section \ref{sec:io-drivers} for details).}
 \label{fig:loggerinterface}
 \end{figure}
+
+\subsection{Basic I/O driver interface}
+
+To provide maximum flexibility regarding the output format and to support all 
+use cases of NEST, an interface (see Fig.~\ref{fig:loggerinterface}) was 
+developed that connects the virtual recording devices with different I/O 
+libraries, and that allows easy selection between them.
+
 
 \section{Currently implemented I/O drivers}
 \label{sec:io-drivers}
@@ -226,31 +240,16 @@ NEST currently uses C++ streams to store results as plain text files
 containing time stamps as floating point strings. This scheme is
 self-descriptive and simple to implement for post-processing and
 analysis tools.
-
+%
 However for large-scale simulations it leads to: 1) excessively large
 amounts of data written to disk, which is both a performance issue and
 a practical storage problem; 2) a serialization bottleneck when
 opening a separate file per virtual recording device; and 3) a
 serialization bottleneck for metadata updates in the file system when
 new blocks are allocated.
-
-\pleasewrite{Alex}{The ASCII driver has for each virtual recording
-  device a file. The virtual recording devices live on the task.}
-
-One solution used in recent releases of NEST has been the global spike
-detector \cite{gsd}: a single file is opened by a dedicated rank to
-store spiking events, a low cost solution since currently all ranks
-see all spike events through MPI collective communication.
-
-On the other hand, the global spike detector has several long-term
-consequences: 1) it constitutes a serialization bottleneck as spike
-event I/O is handled by a single rank only without using all available
-processors; 2) it is a design constraint requiring all spikes being
-globally available, which may not be scalable; and 3) it is
-inapplicable to more voluminous data (e.g. membrane potentials), which
-is too much to be shipped to a single I/O node.
-
-We will still used an ``ASCII'' driver as a benchmark against other
+%\pleasewrite{Alex}{The ASCII driver has for each virtual recording
+%  device a file. The virtual recording devices live on the task.}
+Neverthess, We will still used an ``ASCII'' driver as a benchmark against other
 approaches, for debugging and validating other drivers, and as an
 interface allowing backwards compatibility.
 
@@ -270,9 +269,9 @@ a collective barrier when finite data structures are extended. In
 short, pHDF5 is read-oriented rather than write-oriented, with some of
 the same drawbacks (and advantages) as the ASCII driver.
 
-For writing the data from large neuronal networks simulated in NEST,
-we have found it difficult to achieve a performance similar to what we
-got with SIONlib.
+%For writing the data from large neuronal networks simulated in NEST,
+%we have found it difficult to achieve a performance similar to what we
+%got with SIONlib.
 
 \paragraph{SIONlib}
 
@@ -295,13 +294,9 @@ for scenarios where the volume of data per task is very small, which
 is potentially the case for NEST. Hence for this case the collective
 writes in SIONlib are preferable.
 
-\section{Benchmark results}
+\section{Benchmarking}
 
-\pleasewrite{Till}{Please add benchmark results here. Short intro text
-  plus two plots, one for each benchmark situation, each containing
-  three performance curves. Short caption to explain the figures.}
-
-\subsection{Benchmark simulations}
+\subsection{Benchmark simulations}\label{sect:use_cases}
 
 For benchmarking, we used two typical simulation tasks. First, the
 simulation of a random balanced network \cite{morrison07}, second the
@@ -314,8 +309,19 @@ For our tests, the random balanced network was run on a single compute
 node of the supercomputer JUQUEEN, being split over 16 threads, while
 the simulation of the microcircuit model was distributed over 32
 compute nodes on JUQUEEN with eight threads each; the overall number
-of neurons amounted to 80,000. Both spike detectors and multimeters
+of neurons amounted to 80,000. Both \emph{Spike detectors} and \emph{Multimeters}
 were used as recording devices.
+
+\subsection{Results}
+
+\pleasewrite{Till}{Please add benchmark results here. Short intro text
+  plus two plots, one for each benchmark situation, each containing
+  three performance curves. Short caption to explain the figures.}
+
+Mimicking the two simulation tasks described above with the NEST I/O proxy, we obtained
+the benchmark results shown in Fig.~\ref{fig:xxx}.
+\pleasewrite{Till}{Please write here something short with summarizes the results
+of your figures. And please insert the right reference to your figure just before this pleasewrite.}
 
 % \begin{itemize}
 %   \item{Random balanced network: Dry-run simulation for M=32, T=16, N=300,000, mean firing frequ. of 7 Hz}
@@ -335,10 +341,12 @@ were used as recording devices.
 
 The NEST I/O proxy presented allows developers to flexibly switch
 between several backends with different performance characteristics
-and use-case profiles. It proved a good tool for profiling and
+and use-case profiles. It proved to be a good tool for profiling and
 benchmarking NEST's I/O over a range of parameters without the
 computational and developmental overhead required to cover the same
 range of possibilities using production runs of NEST.
+
+\pleasewrite{Till}{Single positive sentence about SionLib if the results justify it.}
 
 Additionally, the proxy can be used as a generic tool for benchmarking
 I/O strategies in general, given that NEST is a leading neuronal
@@ -357,30 +365,31 @@ Portfolio Theme "Supercomputing and Modeling for the Human Brain".
 % --------------------------------------------------------------------------------
 \begin{thebibliography}{99}
 
+\bibitem{NESTInitiative} NEST Initiative: The Neural Simulation
+  Technology Initiative. \url{http://www.nest-initiative.org}.
+
 \bibitem{NEST} %
   M.~Gewaltig, M.~Diesmann. NEST (NEural Simulation
   Tool). \textit{Scholarpedia} %
   \textbf{2.4}:1430, 2007.
 
-\bibitem{NESTInitiative} NEST Initiative: The Neural Simulation
-  Technology Initiative. \url{http://www.nest-initiative.org}.
+\bibitem{gsd} S.~Kunkel et al. Spiking network simulation code for
+  petascale computers.  \textit{Front.~Neuroinform.} \textbf{8}:78,
+  2014.
 
 \bibitem{ScoreP} Andreas Kn\"upfer et al. Score--P --- A Joint
   Performance Measurement Run--Time Infrastructure for Periscope,
-  Scalasca, TAU, and Vampir. In: \textit{Proc. of 5th Parallel Tools
+  Scalasca, TAU, and Vampir. In: \textit{Proc.~of 5th Parallel Tools
     Workshop}, pp.~79--91, 2012.
 
-\bibitem{gsd} S.~Kunkel, M.~Schmidt, J.M.~Eppler, H.E.~Plesser,
-  G.~Masumoto, J.~Igarashi, S.~Ishii, T.~Fukai, A.~Morrison,
-  M.~Diesmann, M.~Helias.  Spiking network simulation code for
-  petascale computers.  \textit{Front. Neuroinform.} \textbf{8}:78,
-  2014.
-
-\bibitem{neo} S.~Garcia, D.~Guarino, F.~Jaillet, T.~Jennings,
-  R.~Pr{\"o}pper, P.L.~Rautenberg, C.C.~Rodgers, A.~Sobolev,
-  T.~Wachtler, P.~Yger. NEO: an object model for handling
+\bibitem{neo} S.~Garcia et al. NEO: an object model for handling
   electrophysiology data in multiple formats.
-  \textit{Front. Neuroinform.}, \textbf{10}:8, 2014.
+  \textit{Front.~Neuroinform.}, \textbf{10}:8, 2014.
+% \bibitem{neo} S.~Garcia, D.~Guarino, F.~Jaillet, T.~Jennings,
+%   R.~Pr{\"o}pper, P.L.~Rautenberg, C.C.~Rodgers, A.~Sobolev,
+%   T.~Wachtler, P.~Yger. NEO: an object model for handling
+%   electrophysiology data in multiple formats.
+%   \textit{Front.~Neuroinform.}, \textbf{10}:8, 2014.
 
 \bibitem{neuroshare} The Neuroshare Project: Neuroshare Home
   Page. \url{http://neuroshare.sourceforge.net}.
@@ -389,8 +398,8 @@ Portfolio Theme "Supercomputing and Modeling for the Human Brain".
   Page. \url{http://www.hdfgroup.org/HDF5/PHDF5}.
 
 \bibitem{frings2009scalable} W.~Frings, F.~Wolf, V.~Petkov. Scalable
-  massively parallel I/O to task-local files.  In: \textit{Proceedings
-    of the Conference on High Performance Computing, Networking,
+  massively parallel I/O to task-local files.  In: \textit{Proc.~of
+  the Conference on High Performance Computing, Networking,
     Storage and Analysis}, article No.~17, 2009.
 
 \bibitem{morrison07} A.~Morrison, A.~Aertsen,
@@ -400,15 +409,15 @@ Portfolio Theme "Supercomputing and Modeling for the Human Brain".
 
 \bibitem{potjans14} T.C.~Potjans, M.~Diesmann. The cell-type specific
   cortical microcircuit: relating structure and activity in a
-  full-scale spiking network model. \textit{Cereb. Cortex}
-  \textbf{24}:785-806, 2014.
+  full-scale spiking network model. \textit{Cereb.~Cortex}
+  \textbf{24}:785--806, 2014.
 
 \bibitem{neuron} M.~L.~Hines, N.~T.~Carnevale. The NEURON simulation
   environment. \textit{Neural Computation} \textbf{9.6}: 1179--1209,
   1997.
 
 \bibitem{brian} D.~F.~M.~Goodman, R.~Brette. The Brian
-  simulator. \textit{Front. Neurosc.} \textbf{3.2}:192--197, 2009.
+  simulator. \textit{Front.~Neurosc.} \textbf{3.2}:192--197, 2009.
 
 \end{thebibliography}
 
