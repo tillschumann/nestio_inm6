@@ -129,7 +129,7 @@ estimated.
 Given that NEST simulates an arbitrary neuronal network based on the
 rules given in a simulation script, the program structure only gives
 approximate and not exact information about the writing behavior. To
-get the real runtime behavior, code analysis was acompanied by runtime
+get the real runtime behavior, code analysis was accompanied by runtime
 measurements for common use cases.
 
 \subsection{Analysis of NEST code}
@@ -180,14 +180,14 @@ write functions.
 \begin{tabular}{lll}
 \hline\hline
 \textbf{Name}                   & \textbf{Type} & \textbf{Description} \\ \hline
-numberOfSpikeDetectorsPerThread & Integer       & number of SpikeDetectors per thread  \\
+numberOfSpikeDetectorsPerThread & Integer       & number of Spike detectors per thread  \\
 numberOfMultimetersPerThread    & Integer       & number of Multimeters per thread  \\
 spikesPerDetector               & Distribution  & number of spikes generated at each \\
-				& 	        & SpikeDetector per iteration  \\
+				& 	        & Spike detector per iteration  \\
 samplingIntervalsOfMeter        & Distribution  & sampling interval of the Multimeters  \\
 numberOfValuesWrittenByMeter    & Distribution  & number of written values by each \\
 				& 	        & Multimeter in sampling interval  \\
-deadTimeUpdate                  & Distribution  & sleeping timings between SpikeDetector \\
+deadTimeUpdate                  & Distribution  & sleeping timings between Spike detectors \\
 				& 	        & and Multimeters writing operations \\
 deadTimeDeliver                 & Distribution  & sleeping time in deliver function  \\
 \hline\hline
@@ -305,7 +305,7 @@ writes in SIONlib are preferable.
 
 For benchmarking, we used two typical simulation tasks. First, the
 simulation of a random balanced network \cite{morrison07}, second the
-microcircuit model of a cubic milimeter of cortex \cite{potjans14}.
+microcircuit model of a cubic millimeter of cortex \cite{potjans14}.
 The first has very balanced I/O requirements, while the latter is very
 close to typical production runs carried out by the neuroscience
 community.
