@@ -190,11 +190,11 @@ int main(int argc, char *argv[])
 	
 	nestio::Configuration conf;
 	conf.logger = nestio::ASCII;
-	conf.bufferSize = 2400;
+	conf.bufferSize = 2400; //2400 1024*1024
 	conf.numberOfThreads=new nestio::FixIntValue(numberOfThreads); //must not be changed
-	conf.numberOfSpikeDetectorsPerThread=new nestio::FixIntValue(8);
-	conf.spikesPerDector = new nestio::StandardDistribution(4.1,2.5);
-	conf.numberOfMultimetersPerThread= new nestio::FixIntValue(8);
+	conf.numberOfSpikeDetectorsPerThread=new nestio::FixIntValue(1);
+	conf.spikesPerDector = new nestio::StandardDistribution(2.1,0.5);
+	conf.numberOfMultimetersPerThread= new nestio::FixIntValue(1);
 	conf.samplingIntervalsOfMeter = new nestio::FixDoubleValue(0.1);
 	conf.deadTimeSpikeDetector = new nestio::FixIntValue(35); //
 	conf.deadTimeMultimeters = new nestio::FixIntValue(35); //

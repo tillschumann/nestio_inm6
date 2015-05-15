@@ -145,6 +145,8 @@ void Sionlib_logger::signup_spike(int id, int neuron_id)
     node.id=id;
     node.interval=0;
     
+    
+    //std::cout  << "header_spike.size=" << header_spike.size() << " thread_num=" << thread_num <<std::endl;
     header_spike[thread_num].nodes.push_back(node);
     
     
@@ -170,11 +172,11 @@ void Sionlib_logger::signup_multi(int id, int neuron_id, double sampling_interva
     node.numberOfValues=valueNames.size();
     for (int i=0; i<valueNames.size(); i++) {
       #ifndef NESTIOPROXY
-      std::string vN = valueNames.at(i).toString();
+      //std::string vN = valueNames.at(i).toString(); //TODO
       #else
-      std::string vN = valueNames.at(i);
+      //std::string vN = valueNames.at(i);		//TODO
       #endif
-      memcpy(node.valueNames[i],vN.c_str(), min(20,(int)vN.size()));
+      //memcpy(node.valueNames[i],vN.c_str(), min(20,(int)vN.size())); //TODO
     }
     
     header_multi[thread_num].nodes.push_back(node);
@@ -198,35 +200,7 @@ void Sionlib_logger::initialize(const double T)
 {
   //set missing parameter
   P_.T_ = T;
-  #ifndef NESTIOPROXY
-  P_.Tresolution_ = nest::Node::network()->get_min_delay();
-  #endif
   
-  
-  int num_threads=omp_get_max_threads();
-
-    header_multi.resize(num_threads);
-    header_spike.resize(num_threads);
-    
-    for (int i=0; i<num_threads; i++) {
-      header_multi[i].NodesCount=0;
-      header_spike[i].NodesCount=0;
-      
-      header_multi[i].numberOfWrittenData=0;
-      header_spike[i].numberOfWrittenData=0;
-    }
-
-    spike_sid.reserve(num_threads);
-    multi_sid.reserve(num_threads);
-    
-    if (P_.loggerType_ == nestio::Buffered || P_.loggerType_ == nestio::Collective) {
-    buffer_multi = new SionBuffer[num_threads];
-    buffer_spike = new SionBuffer[num_threads];
-    for (int i=0; i<num_threads;i++) {
-      buffer_multi[i].extend(P_.logger_buffer_size_);
-      buffer_spike[i].extend(P_.logger_buffer_size_);
-    }
-  }
   
   #pragma omp parallel
   {
@@ -261,21 +235,26 @@ void Sionlib_logger::initialize(const double T)
     #ifdef HAVE_MPI
     int rank, num_procs;
     
+    sion_int64 sion_buffer_size_spike = P_.sion_buffer_size_;
+    sion_int64 sion_buffer_size_multi = P_.sion_buffer_size_;
+    
     MPI_Comm lComm;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
     
     /* create a new file */
+    std::cout << "open spike_sid thread_num=" << thread_num << std::endl;
     spike_sid[thread_num] = sion_paropen_ompi(spike_fname, "bw", &numFiles,
     MPI_COMM_WORLD, &lComm,
-    &P_.sion_buffer_size_, &fsblksize,
+    &sion_buffer_size_spike, &fsblksize,
     &rank,
     NULL, &newfname);
     
     /* create a new file */
+    std::cout << "open multi_sid thread_num=" << thread_num << std::endl;
     multi_sid[thread_num] = sion_paropen_ompi(multi_fname, "bw", &numFiles,
     MPI_COMM_WORLD, &lComm,
-    &P_.sion_buffer_size_, &fsblksize,
+    &sion_buffer_size_multi, &fsblksize,
     &rank,
     NULL, &newfname);
     
@@ -286,12 +265,13 @@ void Sionlib_logger::initialize(const double T)
     
     sion_int64* ptr_chunk = &P_.sion_buffer_size_;
     
-    
+    std::cout << "wompi open spike_sid thread_num=" << thread_num << std::endl;
     spike_sid[thread_num] =  sion_open(spike_fname, "bw", &ntasks, &numFiles,
     &ptr_chunk, &fsblksize,
     &ptr_rank,
     NULL);
     
+    std::cout << "wompi open multi_sid thread_num=" << thread_num << std::endl;
     multi_sid[thread_num] = sion_open(multi_fname, "bw", &ntasks,  &numFiles,
     &ptr_chunk, &fsblksize,
     &ptr_rank,
@@ -310,14 +290,14 @@ void Sionlib_logger::initialize(const double T)
     
     if (P_.loggerType_ == nestio::Collective) {
       #ifdef HAVE_MPI
-      sion_coll_fwrite(&header_spike[thread_num].NodesCount, sizeof(int), 1, spike_sid[thread_num]);
+      /*sion_coll_fwrite(&header_spike[thread_num].NodesCount, sizeof(int), 1, spike_sid[thread_num]);
       sion_coll_fwrite(&P_.T_, sizeof(double), 1, spike_sid[thread_num]);
       sion_coll_fwrite(&P_.Tresolution_, sizeof(double), 1, spike_sid[thread_num]); // should be Tresolution //TODO
       sion_coll_fwrite(&numberOfRecords, sizeof(int), 1, spike_sid[thread_num]);
 
       // !!!!! caution
       startOfBody = 3*sizeof(int)+2*sizeof(double)+header_spike[thread_num].NodesCount*(2*sizeof(int));
-      sion_coll_fwrite(&startOfBody, sizeof(int), 1, spike_sid[thread_num]);
+      sion_coll_fwrite(&startOfBody, sizeof(int), 1, spike_sid[thread_num]);*/
       #endif
     }
     else {
@@ -342,7 +322,7 @@ void Sionlib_logger::initialize(const double T)
     
     if (P_.loggerType_ == nestio::Collective) {
       #ifdef HAVE_MPI
-      sion_coll_fwrite(&header_multi[thread_num].NodesCount, sizeof(int), 1, multi_sid[thread_num]);
+      /*sion_coll_fwrite(&header_multi[thread_num].NodesCount, sizeof(int), 1, multi_sid[thread_num]);
       sion_coll_fwrite(&P_.T_, sizeof(double), 1, multi_sid[thread_num]);
       sion_coll_fwrite(&P_.Tresolution_, sizeof(double), 1, multi_sid[thread_num]); // should be Tresolution
       sion_coll_fwrite(&numberOfRecords, sizeof(int), 1, multi_sid[thread_num]);
@@ -379,7 +359,7 @@ void Sionlib_logger::initialize(const double T)
 	sion_coll_fwrite(buffer.read(), buffer.getSize(), 1, multi_sid[thread_num]);
       else
 	sion_coll_fwrite(buffer.read(), 1, 0, multi_sid[thread_num]);
-    //std::cout << "tricky done" << std::endl;
+    //std::cout << "tricky done" << std::endl;*/
       #endif
     }
     else {
@@ -399,7 +379,7 @@ void Sionlib_logger::initialize(const double T)
       //buffer << (int)1;
       for (int i=0; i<header_multi[thread_num].NodesCount;i++) {
 	SionFileHeaderNode& node = header_multi[thread_num].nodes[i];
-	buffer.getEnoughFreeSpace(3*sizeof(int)+sizeof(double)+sizeof(char)*node.numberOfValues);
+	buffer.getEnoughFreeSpace(3*sizeof(int)+sizeof(double)+20*sizeof(char)*node.numberOfValues);
 	//sion_fwrite(&header_multi[thread_num].nodes[i].id, sizeof(int), 1, multi_sid[thread_num]);
 	//sion_fwrite(&header_multi[thread_num].nodes[i].neuron_id, sizeof(int), 1, multi_sid[thread_num]);
 	//sion_fwrite(&header_multi[thread_num].nodes[i].interval, sizeof(double), 1, multi_sid[thread_num]);
@@ -429,7 +409,38 @@ void Sionlib_logger::initialize(const double T)
  */
 Sionlib_logger::Sionlib_logger(const std::string& path, const std::string& file_extension,int logger_buf_size, sion_int64 sion_buf_size, nestio::Logger_type loggerType)
 :P_(path, file_extension, loggerType, logger_buf_size, sion_buf_size)
-{}
+{
+  #ifndef NESTIOPROXY
+  P_.Tresolution_ = nest::Node::network()->get_min_delay();
+  #endif
+  
+  
+  int num_threads=omp_get_max_threads();
+
+    header_multi.resize(num_threads);
+    header_spike.resize(num_threads);
+    
+    for (int i=0; i<num_threads; i++) {
+      header_multi[i].NodesCount=0;
+      header_spike[i].NodesCount=0;
+      
+      header_multi[i].numberOfWrittenData=0;
+      header_spike[i].numberOfWrittenData=0;
+    }
+
+    spike_sid.reserve(num_threads);
+    multi_sid.reserve(num_threads);
+    
+    if (P_.loggerType_ == nestio::Buffered || P_.loggerType_ == nestio::Collective) {
+    buffer_multi = new SionBuffer[num_threads];
+    buffer_spike = new SionBuffer[num_threads];
+    for (int i=0; i<num_threads;i++) {
+      buffer_multi[i].extend(P_.logger_buffer_size_);
+      buffer_spike[i].extend(P_.logger_buffer_size_);
+    }
+  }
+  
+}
 
 Sionlib_logger::Sionlib_logger(): P_(".",".log", nestio::Standard, 100, 100) {
   //std::cout << "create logger in thread "<< omp_get_thread_num() << std::endl;
@@ -481,8 +492,8 @@ void Sionlib_logger::finalize()
     #endif
     if (P_.loggerType_ == nestio::Collective) {
       #ifdef HAVE_MPI
-      sion_coll_fwrite(&header_spike[thread_num].numberOfWrittenData,sizeof(int),1,spike_sid[thread_num]);
-      sion_coll_fwrite(&header_multi[thread_num].numberOfWrittenData,sizeof(int),1,multi_sid[thread_num]);
+      /*sion_coll_fwrite(&header_spike[thread_num].numberOfWrittenData,sizeof(int),1,spike_sid[thread_num]);
+      sion_coll_fwrite(&header_multi[thread_num].numberOfWrittenData,sizeof(int),1,multi_sid[thread_num]);*/
       #endif
     }
     else {
@@ -510,7 +521,7 @@ void Sionlib_logger::synchronize(const double& t)
   std::cout << "synchronize t=" << t << std::endl;
   if (P_.loggerType_ == nestio::Collective) {
     #ifdef HAVE_MPI
-    const int thread_num = omp_get_thread_num();
+    /*const int thread_num = omp_get_thread_num();
 
     //if (buffer_spike[thread_num].getSize()>0) {
     //std::cout << "spike coll_write buffer_size=" << buffer_spike[thread_num].getSize() << std::endl;
@@ -521,7 +532,7 @@ void Sionlib_logger::synchronize(const double& t)
     //std::cout << "multi coll_write buffer_size=" << buffer_multi[thread_num].getSize() << std::endl;
     sion_coll_fwrite(buffer_multi[thread_num].read(), 1, buffer_multi[thread_num].getSize(), multi_sid[thread_num]);
     buffer_multi[thread_num].clear();
-    //}
+    //}*/
     #endif
   }
 }

@@ -94,13 +94,18 @@ namespace nestio
     IDistribution* copy_init()
     {
 	StandardDistribution* copy = new StandardDistribution();
+	//std::cout << "this=" << this << std::endl;
+	//std::cout << "copy=" << copy << std::endl;
 	*copy = *this;
+	//std::cout << "this=" << this << std::endl;
+	//std::cout << "copy=" << copy << std::endl;
 	copy->init();
 	return copy;
     }
     
     StandardDistribution & operator= (const StandardDistribution & other)
     {
+      //std::cout << "call =" << std::endl;
       if (other.eng != NULL)
 	eng = new std::tr1::ranlux64_base_01(other.seed);
       else

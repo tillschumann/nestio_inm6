@@ -65,7 +65,7 @@ public:
 	int spikes = (int)spikes_dists.at(n)->getValue();
 	for (int i=0; i<spikes; i++) {
 	  #ifdef _DEBUG_MODE
-	    std::cout << "record_spike" << std::endl;
+	    //std::cout << "record_spike" << std::endl;
 	  #endif
 	    logger->record_spike(spikedetector_id, neuron_ids.at(n), timestamp);
 	}
