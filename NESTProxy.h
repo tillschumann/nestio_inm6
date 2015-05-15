@@ -9,6 +9,7 @@
 #include <sstream>
 #include <math.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include "timer/scopetimer.h"
 #include "timer/stopwatch.h"
 #include "timer/seriestimer.h"

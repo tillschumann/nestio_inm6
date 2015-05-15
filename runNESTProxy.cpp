@@ -189,6 +189,7 @@ int main(int argc, char *argv[])
 	simSettings.Tresolution=0.1;
 	
 	nestio::Configuration conf;
+	// conf.logger = nestio::SIONLIB;
 	conf.logger = nestio::ASCII;
 	conf.bufferSize = 2400; //2400 1024*1024
 	conf.numberOfThreads=new nestio::FixIntValue(numberOfThreads); //must not be changed
