@@ -62,7 +62,7 @@ class Index:
     def next(self, event):
         root = Tkinter.Tk()
 	root.withdraw()
-	dir_path = tkFileDialog.askdirectory(parent=root,initialdir="/home/till/clusters/hambach.inm.kfa-juelich.de/test/nestio",title='Please select a directory')
+	dir_path = tkFileDialog.askdirectory(parent=root,initialdir="/home/schumann/clusters/hambach.inm.kfa-juelich.de/test/nestio",title='Please select a directory')
 	print dir_path
 
 
@@ -93,7 +93,7 @@ class Index:
 	Td = result_deliver.T
 	
 	gid = "dataset_%i"%self.ind
-        artist_lst = ax.plot(np.mean(Tw-Tsl+Tsy, axis=1), picker=True, gid=gid)
+        artist_lst = ax.plot(np.mean(Tw, axis=1), picker=True, gid=gid) #-Tsl+Tsy
         
         
         reader_configuration = csv.reader(open('%s/config.csv'%dir_path,"rb"),delimiter=';')
