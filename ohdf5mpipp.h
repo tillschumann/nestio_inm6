@@ -205,7 +205,7 @@ class OHDF5mpipp : public ILogger
 		void crecord_spike(int id, int neuron_id, int timestamp);
 		
 		void record_multi(int id, int neuron_id, int timestamp, const std::vector<double_t>& data);
-		void signup_spike(int id, int neuron_id, int expectedSpikeCount);
+		void signup_spike(int id, int neuron_id);
 		void signup_multi(int id, int neuron_id, double sampling_interval, std::vector<Name> valueNames);
 		
 		//void signup_spike(SpikeDetector* spike, int neuron_id, int buf);

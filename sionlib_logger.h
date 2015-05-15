@@ -23,7 +23,7 @@ struct SionFileHeaderNode
   int neuron_id;
   int numberOfValues;
   double interval;
-  char valueNames[10][20];
+  char valueNames[20][20];
 };
 
 struct SionFileHeader

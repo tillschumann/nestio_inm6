@@ -52,10 +52,10 @@ class NESTProxy
 		  sleeptimer[omp_get_thread_num()].pause();
 		}
 		
-		void deliver()
+		void deliver(nestio::IDistribution* dist)
 		{
 		  delivertimer[omp_get_thread_num()].start();
-		  int s = (int)conf.deadTimeDeliver->getValue();
+		  int s = (int)dist->getValue();
 		  //std::cout << "sleep " << s << std::endl;
 		  if (s>0)
 		    usleep(s);
@@ -93,8 +93,9 @@ class NESTProxy
 			num_threads = omp_get_max_threads();
 			
 			//init rand
-			sleep(rank);
-			srand(time(NULL));
+			std::cout << "1 rank=" << rank << std::endl; 
+			//sleep(rank);
+			//srand(time(NULL));
 			#ifdef _DEBUG_MODE
 			std::cout << "print config" << std::endl;
 			std::cout << "\tTstop="<< simSettings.T<< std::endl;
@@ -112,6 +113,7 @@ class NESTProxy
 			
 			#pragma omp parallel 
 			{
+			  
 			    nestio::IDistribution* numberOfSpikeDetectorsPerThread = conf.numberOfSpikeDetectorsPerThread->copy_init();
 			    nestio::IDistribution* samplingIntervalsOfMeter = conf.samplingIntervalsOfMeter->copy_init();
 			    nestio::IDistribution* numberOfValuesWrittenByMeter = conf.numberOfValuesWrittenByMeter->copy_init();
@@ -125,6 +127,8 @@ class NESTProxy
 			    else
 			      nosdpt = numberOfSpikeDetectorsPerThread->getIntValue();
 			    
+			    
+			    
 			    bool multimeter_config_for_thread = conf.multimeter_configs.find(nestio::getThreadHash())!=conf.multimeter_configs.end();
 			    int nompt;
 			    if (multimeter_config_for_thread) {
@@ -134,11 +138,14 @@ class NESTProxy
 			      nompt = numberOfMultimetersPerThread->getIntValue();
 			    }
 			    
+			    std::cout << "nompt=" << nompt << std::endl;
+			    std::cout << "nosdpt=" << nosdpt << std::endl;
+			    
 			    #pragma omp critical 
 			    {
 			      spikeDetectors[thread_num].reserve(nosdpt);
 			      multimeters[thread_num].reserve(nompt);
-			    }
+			    } 
 			    
 			    int neuron_id_offset = (thread_num*nosdpt)+rank*num_threads*nosdpt;
 			    for (int i=0;i<nosdpt;i++) {
@@ -172,9 +179,18 @@ class NESTProxy
 				multimeter->singup();
 				multimeters[thread_num].push_back(multimeter);
 			    }
-			  #pragma omp barrier
+			    
+			    delete numberOfValuesWrittenByMeter;
+			    delete samplingIntervalsOfMeter;
+			    delete numberOfMultimetersPerThread;
+			    delete numberOfSpikeDetectorsPerThread;
+			    
+			  
+			  //#pragma omp barrier
 			  
 			}
+			std::cout << "2 rank=" << rank << std::endl; 
+			logger.initialize(simSettings.T);
 		}
 
 		~NESTProxy()
@@ -211,11 +227,11 @@ class NESTProxy
 		 */
 		void run()
 		{
-			#ifdef _DEBUG_MODE
+			//#ifdef _DEBUG_MODE
 			std::cout << "NEST PROXY RUN" << std::endl;
 			std::cout << "Parameters:" << std::endl;
 			std::cout << "RAND_MAX=" << RAND_MAX << std::endl;
-			#endif
+			//#endif
 			//std::cout << "thread_num=" << thread_num << std::endl;
 			double t=0;
 			int timestamp=0;
@@ -226,13 +242,11 @@ class NESTProxy
 			//SCOREP_USER_REGION_DEFINE(epik_sync);
 			//SCOREP_USER_REGION_DEFINE(epik_sleep);
 			
-			logger.initialize(simSettings.T);
-			
 			#pragma omp parallel firstprivate(t,timestamp)
 			{
-			  conf.deadTimeSpikeDetector->init();
-			  conf.deadTimeMultimeters->init();
-			  conf.deadTimeDeliver->init();
+			  nestio::IDistribution* deadTimeSpikeDetector = conf.deadTimeSpikeDetector->copy_init();
+			  nestio::IDistribution* deadTimeMultimeters = conf.deadTimeMultimeters->copy_init();
+			  nestio::IDistribution* deadTimeDeliver = conf.deadTimeDeliver->copy_init();
 			
 			  while (t<=simSettings.T) {
 				#ifdef _DEBUG_MODE
@@ -245,7 +259,7 @@ class NESTProxy
 				  {
 				    //SCOREP_USER_REGION( "deliver", SCOREP_USER_REGION_TYPE_FUNCTION )
 				    //std::cout << "deliver" << std::endl;
-				    deliver();
+				    deliver(deadTimeDeliver);
 				  }
 
 				  {
@@ -255,13 +269,13 @@ class NESTProxy
 				    writetimer[thread_num].start();
 				    for (int i=0;i<spikeDetectors[thread_num].size();i++) {
 // 					//SCOREP_USER_REGION_BEGIN(epik_sleep,"sleep",SCOREP_USER_REGION_TYPE_COMMON);
-					sleepAndMeasure(conf.deadTimeSpikeDetector);
+					sleepAndMeasure(deadTimeSpikeDetector);
 					//SCOREP_USER_REGION_END(epik_sleep);
 					spikeDetectors[thread_num].at(i)->update(t,timestamp);
 				    }
 				    for (int i=0;i<multimeters[thread_num].size();i++) {
 					//SCOREP_USER_REGION_BEGIN(epik_sleep,"sleep",SCOREP_USER_REGION_TYPE_COMMON);
-					sleepAndMeasure(conf.deadTimeMultimeters);
+					sleepAndMeasure(deadTimeMultimeters);
 					//SCOREP_USER_REGION_END(epik_sleep);
 					multimeters[thread_num].at(i)->update(t,timestamp);
 				    }
@@ -285,9 +299,13 @@ class NESTProxy
 				t+=simSettings.Tresolution;
 				timestamp++;
 				}
-			#ifdef _DEBUG_MODE
+			//#ifdef _DEBUG_MODE
 			std::cout << "Iterations done" << std::endl;
-			#endif
+			//#endif
+			
+			delete deadTimeSpikeDetector;
+			delete deadTimeMultimeters;
+			delete deadTimeDeliver;
 		    }
 		    logger.finalize();
 		}

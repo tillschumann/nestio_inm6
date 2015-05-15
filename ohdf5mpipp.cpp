@@ -426,7 +426,7 @@ void OHDF5mpipp::registerHDF5DataSet(HDF5DataSet& dataset, char* name)
   //status = H5Sclose (filespace);
 }
 
-void OHDF5mpipp::signup_spike(int id, int neuron_id, int expectedSpikeCount)
+void OHDF5mpipp::signup_spike(int id, int neuron_id)
 {
   
   std::stringstream datasetname_ss;
