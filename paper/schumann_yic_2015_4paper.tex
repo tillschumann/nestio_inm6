@@ -223,20 +223,13 @@ calls one or more write functions.
         \hspace{0.009\textwidth}
         \begin{subfigure}[b]{0.49\textwidth}
 	      \includegraphics[width=.85\linewidth]{ascii_plot_10_8.eps}
-	      \caption{NESTProxy output (used microcircuit model parametrization) plots the measured writing timings of the ASCII driver against internal iteration loop number.
-	      \cite{yuml}}
+	      \caption{NESTProxy output (used microcircuit model parametrization)
+	      plots the measured writing timings of the ASCII driver against internal iteration loop number.}
 	      \label{fig:asciiplot}
         \end{subfigure}%
 
 
 \end{figure}
-
-%\includegraphics[scale=0.5]{loggerinterface.eps}
-%\caption{ILogger implements the I/O interface for the virtual
-%  recording devices.  Three differenct logger interfaces are
-%  available: \emph{ASCIILogger}, \emph{SIONLogger}, and
-%  \emph{HDF5Logger} (see section \ref{sec:io-drivers} for details). \cite{yuml}}
-%\label{fig:loggerinterface}
 
 \subsection{Basic I/O driver interface}
 
@@ -281,10 +274,6 @@ significant amounts of metadata to describe the data layout, creating
 a collective barrier when finite data structures are extended. In
 short, pHDF5 is read-oriented rather than write-oriented, with some of
 the same drawbacks (and advantages) as the ASCII driver.
-
-%For writing the data from large neuronal networks simulated in NEST,
-%we have found it difficult to achieve a performance similar to what we
-%got with SIONlib.
 
 \paragraph{SIONlib}
 
@@ -332,7 +321,6 @@ A final benchmark run shows the possibilities of the NESTProxy.  Using
 the parametrization of a typical simulation (see
 \ref{sect:use_cases}), we ran the NESTProxy using the current NEST
 implementation of the ASCII driver.
-%(1) The current ASCII implemenation from NEST, (2) a standard sionlib implementation and (3) a sionlib implemenations which buffers before writting.
 The NESTProxy was executed on an Intel Xeon cluster using $10$ compute
 nodes and $8$ threads per compute node. Mimicking the microcircuit
 simulation described above with the NEST I/O proxy, we obtained the
@@ -341,20 +329,6 @@ ASCII driver implementation. The current NEST I/O \emph{ASCII}
 implementation produces significant variation in writing timing.
 Besides leading to large delays (up to $0.2$ seconds), this variation
 also causes problems in workload optimization.
-
-% \begin{itemize}
-%   \item{Random balanced network: Dry-run simulation for M=32, T=16, N=300,000, mean firing frequ. of 7 Hz}
-%   \item{Microcircuit model: Real simulation of only one area, run over 1000.0 ms: \\
-% - Number of MPI processes: 32\\
-% - Number of threads per MPI process: 8\\
-% - Number of virtual processes (VPs): 256 (32x8)\\
-% - Number of spike detectors per VP: 8\\
-% - Number of neurons attached to each spike detector: 10000/256 (ca.)\\
-% - Number of multimeters per VP: 8\\
-% - Number of neurons attached to each multimeter: 500/256\\
-% - MinDelay interval: Most likely equal to h step (= 0.1 ms)\\
-% - Overall number of neurons in the network: 80,000}
-% \end{itemize}
 
 \section{Conclusions}
 
@@ -374,8 +348,7 @@ NEURON \cite{neuron} and Brian \cite{brian}.
 \section*{Acknowledgments}
 
 Partially funded by the Helmholtz Association through the Helmholtz
-Portfolio Theme "Supercomputing and Modeling for the Human Brain".
-\pleasewrite{Till}{funded by the BBP of EPFL}
+Portfolio Theme "Supercomputing and Modeling for the Human Brain" and the EPFL Blue Brain Project.
 
 
 % --------------------------------------------------------------------------------
