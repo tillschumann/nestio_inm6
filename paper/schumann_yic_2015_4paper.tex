@@ -62,11 +62,11 @@
     networks. It runs on ordinary desktop computers and notebooks,
     small clusters and supercomputers. Storing
     simulation data efficiently is essential for neuroscientific
-    studies but not trivial on supercomputers with centralized
+    studies but is not trivial on supercomputers with centralized
     storage. To assess different I/O strategies and libraries, we have
     implemented a \emph{proxy} which imitates the writing behavior of
-    NEST. This proxy allows benchmarking and statistical analysis, and
-    thus consequent optimizations, without the complexity of running
+    NEST. This proxy is useful in benchmarking and statistical analysis, and
+    thus consequent optimization, without the complexity of running
     full NEST simulations.}}
 
 % --------------------------------------------------------------------------------
@@ -90,15 +90,15 @@
 Over the past 20 years, the NEST Initiative \cite{NESTInitiative} has
 developed the NEST simulator \cite{NEST} for spiking neural network
 models. It is used in computational neuroscience to simulate the
-dynamics of the interaction between nerve cells. The same code base is
-used to simulate small networks on local machines up to large
-brain-scale circuits using the full capabilities of the world's
-leading supercomputers. The basis of this flexibility is a hybrid
-parallelization scheme using threads locally and MPI to communicate
-between the compute nodes.
+dynamics of interactions between nerve cells. The same code base is
+used to simulate a range of networks, from small networks on local
+machines up to large brain-scale circuits using the full capabilities
+of the world's leading supercomputers. The basis of this flexibility
+is a hybrid parallelization scheme using threads on a single node and
+MPI \cite{mpi} to communicate between the compute nodes.
 
 To record and store simulation data, NEST uses virtual recording
-devices. One instance of each of these devices (\emph{Spike detectors}
+devices. One instance of each device (\emph{Spike detectors}
 and \emph{Multimeters}) is created on each thread, and each instance
 writes its data via a C++ stream to disk. For large-scale simulations
 with many threads distributed over many compute nodes, this I/O
@@ -108,35 +108,35 @@ supercomputer like JUQUEEN is fully used.
 
 One solution used in recent releases of NEST has been the global spike
 detector \cite{gsd}: a single file is opened by a dedicated MPI rank to
-store spiking events, a low cost solution since currently all ranks
-see all spike events through MPI collective communication.
+store spiking events, which is a low cost solution since all ranks
+currently see all spike events through MPI collective communication.
 On the other hand, the global spike detector has several long-term
 consequences: 1) it constitutes a serialization bottleneck as spike
 event I/O is handled by a single rank only without using all available
-processors; 2) it is a design constraint requiring all spikes being
+processors; 2) it is a design constraint, requiring all spikes being
 globally available, which may not be scalable; and 3) it is
-inapplicable to more voluminous data (e.g. membrane potentials), which
-is too much to be shipped to a single I/O node.
+inapplicable to more voluminous data (e.g. membrane potentials) which
+can not be tractably shipped to a single I/O node.
 
 To overcome these problems, NEST requires an alternative approach to
 file I/O. An important part of our efforts in this direction is the
 specification and implementation of a \emph{NEST I/O proxy}, which
 mimicks how NEST operates at the I/O level without actually executing
 a full simulation. More specifically, it generates data writing
-patterns similar to full NEST, but just with fake data. Thus, a large
-part of the computational costs of full NEST simulations can be
-avoided while developing and testing new I/O backends. Using this
-proxy, we investigated possible performance gains by replacing the
-current I/O paradigm with calls to parallelized I/O libraries, which
-could avoid serialization bottlenecks, thus paving the road for better
-I/O performance in NEST.
+patterns similar to full NEST using fake data, avoiding a large part
+of the computational costs of full NEST simulations during the
+development and testing of new I/O backends. Using this proxy, we
+have investigated possible performance gains by replacing the current I/O
+paradigm with calls to parallelized I/O libraries which could avoid
+serialization bottlenecks, thus paving the road for better I/O
+performance in NEST.
 
 \section{Design of the NEST I/O proxy}
 
 To develop new I/O strategies, information about the writing behavior
 of NEST is necessary. In order to get this information, the main
-algorithms of NEST were analyzed and the typical writing behavior was
-estimated.
+algorithms of NEST were analyzed and typical writing behavior was
+statistically measured.
 
 Given that NEST simulates an arbitrary neuronal network based on the
 rules given in a simulation script, the program structure only gives
@@ -148,28 +148,28 @@ measurements for common use cases.
 
 The main program structure of NEST can be reduced to an iteration loop
 of gather, scatter and update functions of the network. Gather and
-Scatter calls distribute the node states in the network. The update
-function calls for each node internal algorithms, which process the
-incoming information and update their state.
+Scatter calls distribute the node states throughout the network. For
+each node, the update function calls internal algorithms which process
+the incoming information and update their state.
 
-If the network node is a virtual recording device, it calls writing
-functions depending on the incoming information. \emph{Spike
-  detectors} handle spike events and \emph{Multimeters} request
-internal parameters of node objects. Whether or not a writing call
-occurs depends on the neuronal network structure and activity.
+If the network node is a virtual recording device, the function called
+depends on the type of incoming information. \emph{Spike detectors}
+handle spike events and \emph{Multimeters} store internal parameters
+of node objects. Whether or not a writing call occurs depends on the
+neuronal network structure and activity.
 
 \subsection{Measurements of runtime behavior}
 
 To generate reliable timing measurements of the runtime behavior, part
-of the NEST code, in particular the functions of the virtual recording
-devices and within them the calls to lower-level I/O functions, were
+of the NEST code (in particular the functions of the virtual recording
+devices and their internal calls to lower-level I/O functions) were
 manually instrumented with Score-P \cite{ScoreP}.
 %
-We used the instrumented NEST binary to generate trace data for the
+We have used the instrumented NEST binary to generate trace data for the
 two use cases described in Sect.~\ref{sect:use_cases}.
 From the trace data, we derived
 statistical measures which describe the runtime behavior of NEST,
-e.g.~the distribution of onsets of spike writing in each thread
+e.g.~the distribution of the onset of spike writing in each thread
 relative to the start of the update phase in the main simulation cycle
 of NEST.
 
@@ -186,33 +186,33 @@ spikesPerDetector               & Distribution  & number of spikes generated at 
 samplingIntervalsOfMeter        & Distribution  & sampling interval of the Multimeters  \\
 numberOfValuesWrittenByMeter    & Distribution  & number of written values by each \\
         &           & Multimeter in sampling interval  \\
-deadTimeUpdate                  & Distribution  & sleeping timings between Spike detectors' \\
-        &           & and Multimeters' writing operations \\
-deadTimeDeliver                 & Distribution  & sleeping time in deliver function  \\
+deadTimeUpdate                  & Distribution  & sleep timing between Spike detectors' \\
+        &           & and Multimeters' write operations \\
+deadTimeDeliver                 & Distribution  & sleep time in deliver function  \\
 \hline\hline
 \end{tabular}
 \label{tab:table-silva1}
-\caption{Input parameters of the NEST I/O proxy. Following distributions
+\caption{Input parameters for the NEST I/O proxy. The following distributions
   are implemented: Normal, Poisson, Binominal and fixed values.}
 \end{table}
 
 \subsection{Working principles of the proxy}
 
 The NEST I/O proxy contains three main parts: Construction of the
-network, iteration loop and destruction of the network. In the first
-part each node creates a set of \emph{Spike detector} and
+network, the iteration loop and the destruction of the network. During
+construction, each node creates the \emph{Spike detector} and
 \emph{Multimeter} objects. Their numbers and properties are given by
 the parameters shown in Table \ref{tab:table-silva1}. The iteration
-loop contains a sleep function, parameterized by the distribution
-\emph{deadTimeDeliver}, and update functions for the recording
-devices, which also execute a sleep function, parameterized by the
-distribution \emph{deadTimeUpdate}. During the update function each
-\emph{Spike detector} or \emph{Multimeter} object calls one or more
-write functions.
+loop contains a sleep function and update functions for the recording
+devices. The sleep function is parameterized by the distribution
+\emph{deadTimeDeliver}; the update functions execute a sleep function
+parameterized by the distribution \emph{deadTimeUpdate}. During the
+update function each \emph{Spike detector} or \emph{Multimeter} object
+calls one or more write functions.
 
 \begin{figure}[tb]
 \centering %
-\begin{subfigure}[b]{0.5\textwidth}
+\begin{subfigure}[b]{0.49\textwidth}
                 \includegraphics[width=.85\linewidth]{loggerinterface.eps}
                 \caption{ILogger implements the I/O interface for the virtual
 			recording devices.  Three differenct logger interfaces are
@@ -220,9 +220,10 @@ write functions.
 			\emph{HDF5Logger} (see section \ref{sec:io-drivers} for details). \cite{yuml}}
                 \label{fig:loggerinterface}
         \end{subfigure}%
-        \begin{subfigure}[b]{0.5\textwidth}
+        \hspace{0.009\textwidth}
+        \begin{subfigure}[b]{0.49\textwidth}
 	      \includegraphics[width=.85\linewidth]{ascii_plot_10_8.eps}
-	      \caption{NESTProxy output (used microcircuit model parametrization) plots the measured writing timings of the ASCII driver over internal iteration loop number.
+	      \caption{NESTProxy output (used microcircuit model parametrization) plots the measured writing timings of the ASCII driver against internal iteration loop number.
 	      \cite{yuml}}
 	      \label{fig:asciiplot}
         \end{subfigure}%
@@ -240,15 +241,15 @@ write functions.
 \subsection{Basic I/O driver interface}
 
 To provide maximum flexibility regarding the output format and to support all 
-use cases of NEST, an interface (see Fig.~\ref{fig:loggerinterface}) was 
-developed that connects the virtual recording devices with different I/O 
-libraries, and that allows easy selection between them.
+use cases of NEST, an interface (see Fig.~\ref{fig:loggerinterface})
+has been developed to connect the virtual recording devices with different I/O 
+libraries, allowing easy selection among them.
 
 
 \section{Currently implemented I/O drivers}
 \label{sec:io-drivers}
 
-Based on the interface described above, three different drivers were
+Based on the interface described above, three different drivers have been
 implemented.
 
 \paragraph{ASCII}
@@ -256,24 +257,19 @@ implemented.
 NEST currently uses C++ streams to store results as plain text files
 containing time stamps as floating point strings. This scheme is
 self-descriptive and simple to implement for post-processing and
-analysis tools.
-%
-However for large-scale simulations it leads to: 1) excessively large
-amounts of data written to disk, which is both a performance issue and
-a practical storage problem; 2) a serialization bottleneck when
-opening a separate file per virtual recording device; and 3) a
-serialization bottleneck for metadata updates in the file system when
-new blocks are allocated.
-%\pleasewrite{Alex}{The ASCII driver has for each virtual recording
-%  device a file. The virtual recording devices live on the task.}
-Neverthess, We will still used an ``ASCII'' driver as a benchmark against other
+analysis tools. However, this leads to excessive size of the data
+stored to disk and serialization bottlenecks for metadata updates in
+the file system when new blocks are allocated, in addition to the
+problems described earlier regarding an excessive number of file open
+operations leading to file system serialization. Nevertheless, We will
+still used an ``ASCII'' driver as a benchmark against other
 approaches, for debugging and validating other drivers, and as an
 interface allowing backwards compatibility.
 
 \paragraph{HDF5}
 
 HDF5 is an API commonly used for file formats in the neuroscience
-community, such as NEO \cite{neo} and Neuroshare \cite{neuroshare}.
+community such as NEO \cite{neo} and Neuroshare \cite{neuroshare}.
 Since they use a common binary layout and API, data can be accessed
 from many different languages and through many different libraries.
 The HDF group publishes pHDF5 (parallel HDF5, \cite{hdf5}) which
@@ -302,48 +298,49 @@ the data that is written, but only offers an interface for writing
 byte steams, similar to ANSI-C. In general it focuses on performance
 and simplicity and leaves the interpretation of the data to the user.
 
-The most common write strategy in SIONlib only uses collective
-operations to open and close files while the read and write calls are
-independent and do not need any communication. This method is highly
-scalable but uses file system block alignment to achieve better
-performance and thus results in a significant amount of unused space
-for scenarios where the volume of data per task is very small, which
-is potentially the case for NEST. Hence for this case the collective
-writes in SIONlib are preferable.
+The most common write strategy in SIONlib is to only use collective
+operations to open and close files; read and write calls are
+independent and do not need any collective communication. This method
+is highly scalable. Since it uses file system block alignment to
+achieve better performance, it results in a significant amount of
+unused space for scenarios where the volume of data per task is very
+small, which is potentially the case for NEST. Hence for this case,
+the collective writes in SIONlib are preferable.
 
 \section{Benchmarking}
 
 \subsection{Benchmark simulations}\label{sect:use_cases}
 
-For benchmarking,
-we used two typical simulation tasks. First, the
-simulation of a random balanced network \cite{morrison07}, second the
+For benchmarking, we have used two typical simulation tasks: the
+simulation of a random balanced network \cite{morrison07} and the
 microcircuit model of a cubic millimeter of cortex \cite{potjans14}.
-The first has very balanced I/O requirements, while the latter is very
+The first has very balanced I/O requirements while the latter is very
 close to typical production runs carried out by the neuroscience
 community.
 
 To collect runtime data for the parametrization of the NEST I/O proxy,
-the random balanced network was run on a single compute
-node of the supercomputer JUQUEEN, being split over 16 threads, while
-the simulation of the microcircuit model was distributed over 32
-compute nodes on JUQUEEN with eight threads each; the overall number
-of neurons amounted to 80,000. Both \emph{Spike detectors} and \emph{Multimeters}
-were used as recording devices.
+we ran the random balanced network on a single compute node of the
+supercomputer JUQUEEN split over 16 threads.  The simulation of the
+microcircuit model was distributed over 32 compute nodes on JUQUEEN
+with eight threads each; the overall number of neurons amounted to
+80,000. Both \emph{Spike detectors} and \emph{Multimeters} were used
+as recording devices.
 
 \subsection{Results}
 
-A final benchmark run shows the possibilities of the NESTProxy.
-Using the parametrization of a typical simulation (see \ref{sect:use_cases}),
-the NESTProxy is run with the current NEST implemenation 
+A final benchmark run shows the possibilities of the NESTProxy.  Using
+the parametrization of a typical simulation (see
+\ref{sect:use_cases}), we ran the NESTProxy using the current NEST
+implementation of the ASCII driver.
 %(1) The current ASCII implemenation from NEST, (2) a standard sionlib implementation and (3) a sionlib implemenations which buffers before writting.
-The NESTProxy is executed on an Intel Xeon cluster. $10$ compute nodes and $10$ threads per compute node were used. 
-
-Mimicking the mircocircuit simulation described above with the NEST I/O proxy, we obtained
-the benchmark results for the current NEST implemenation shown in Fig.~\ref{fig:asciiplot}.
-
-The current I/O \emph{ASCII} implementation of NEST produces a large variation of writing timings.
-Besides the the high values (up to $0.2$ seconds) it causes problems for workload optimizations.
+The NESTProxy was executed on an Intel Xeon cluster using $10$ compute
+nodes and $10$ threads per compute node. Mimicking the microcircuit
+simulation described above with the NEST I/O proxy, we obtained the
+benchmark results shown in Fig.~\ref{fig:asciiplot} for the current
+ASCII driver implementation. The current NEST I/O \emph{ASCII}
+implementation produces significant variation in writing timing.
+Besides leading to large delays (up to $0.2$ seconds), this variation
+also causes problems in workload optimization.
 
 % \begin{itemize}
 %   \item{Random balanced network: Dry-run simulation for M=32, T=16, N=300,000, mean firing frequ. of 7 Hz}
@@ -363,7 +360,7 @@ Besides the the high values (up to $0.2$ seconds) it causes problems for workloa
 
 The NEST I/O proxy presented allows developers to flexibly switch
 between several backends with different performance characteristics
-and use-case profiles. It proved to be a good tool for profiling and
+and use-case profiles. It proved to be a useful tool in profiling and
 benchmarking NEST's I/O over a range of parameters without the
 computational and developmental overhead required to cover the same
 range of possibilities using production runs of NEST.
@@ -371,8 +368,8 @@ range of possibilities using production runs of NEST.
 Additionally, the proxy can be used as a generic tool for benchmarking
 I/O strategies in general, given that NEST is a leading neuronal
 network simulators with performance characteristics determined by the
-same constraints also affecting other similar software packages (e.g.,
-NEURON \cite{neuron} or Brian \cite{brian}).
+same constraints which also affect similar software packages such as
+NEURON \cite{neuron} and Brian \cite{brian}.
 
 \section*{Acknowledgments}
 
@@ -441,6 +438,10 @@ Portfolio Theme "Supercomputing and Modeling for the Human Brain".
   simulator. \textit{Front.~Neurosc.} \textbf{3.2}:192--197, 2009.
   
 \bibitem{yuml} yUML: The diagram is generated by yUML. \url{http://yuml.me}
+
+\bibitem{mpi} Message P Forum. Mpi: a Message-Passing Interface
+  Standard. Technical Report. University of Tennessee, Knoxville, TN,
+  USA. 1994.
 
 \end{thebibliography}
 
