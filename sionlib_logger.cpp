@@ -235,6 +235,9 @@ void Sionlib_logger::initialize(const double T)
     #ifdef HAVE_MPI
     int rank, num_procs;
     
+    sion_int64 sion_buffer_size_spike = P_.sion_buffer_size_;
+    sion_int64 sion_buffer_size_multi = P_.sion_buffer_size_;
+    
     MPI_Comm lComm;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
@@ -243,7 +246,7 @@ void Sionlib_logger::initialize(const double T)
     std::cout << "open spike_sid thread_num=" << thread_num << std::endl;
     spike_sid[thread_num] = sion_paropen_ompi(spike_fname, "bw", &numFiles,
     MPI_COMM_WORLD, &lComm,
-    &P_.sion_buffer_size_, &fsblksize,
+    &sion_buffer_size_spike, &fsblksize,
     &rank,
     NULL, &newfname);
     
@@ -251,7 +254,7 @@ void Sionlib_logger::initialize(const double T)
     std::cout << "open multi_sid thread_num=" << thread_num << std::endl;
     multi_sid[thread_num] = sion_paropen_ompi(multi_fname, "bw", &numFiles,
     MPI_COMM_WORLD, &lComm,
-    &P_.sion_buffer_size_, &fsblksize,
+    &sion_buffer_size_multi, &fsblksize,
     &rank,
     NULL, &newfname);
     
