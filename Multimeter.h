@@ -31,6 +31,7 @@ public:
   numberOfValues(numberOfValues),
   values(numberOfValues),
   logger(logger),
+  lastRecordT(0),
   isSinup(false)
   {
     #ifdef _DEBUG_MODE

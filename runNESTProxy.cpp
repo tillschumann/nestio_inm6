@@ -187,7 +187,7 @@ int main(int argc, char *argv[])
 	int threadNumber=omp_get_thread_num();
 	
 	nestio::SimSettings simSettings;
-	simSettings.T=100.0;
+	simSettings.T=1.0;
 	simSettings.Tresolution=0.1;
 	
 	nestio::Configuration conf;

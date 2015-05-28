@@ -348,12 +348,21 @@ void Sionlib_logger::initialize(const double T)
     &rank,
     NULL, &newfname);
     
+    #ifdef _DEBUG_MODE
+    std::cout << "Sionlib_logger::initialize created spike_sid" << std::endl;
+    #endif
+    
     /* create a new file */
     multi_sid[thread_num] = sion_paropen_ompi(multi_fname, "bw", &numFiles,
     MPI_COMM_WORLD, &lComm,
     &sion_buffer_size_multi, &fsblksize,
     &rank,
     NULL, &newfname);
+    
+    
+    #ifdef _DEBUG_MODE
+    std::cout << "Sionlib_logger::initialize created multi_sid" << std::endl;
+    #endif
     
     #else
     int ntasks=1;

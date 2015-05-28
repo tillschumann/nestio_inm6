@@ -93,7 +93,7 @@ namespace nestio
     }
     IDistribution* copy_init()
     {
-	StandardDistribution* copy = new StandardDistribution();
+	StandardDistribution* copy = new StandardDistribution;
 	//std::cout << "this=" << this << std::endl;
 	//std::cout << "copy=" << copy << std::endl;
 	*copy = *this;
@@ -168,7 +168,7 @@ namespace nestio
     }
     IDistribution* copy_init()
     {
-	PoissonDistribution* copy = new PoissonDistribution();
+	PoissonDistribution* copy = new PoissonDistribution;
 	*copy = *this;
 	copy->init();
 	return copy;
@@ -239,7 +239,7 @@ namespace nestio
     }
     IDistribution* copy_init()
     {
-	BinominalDistribution* copy = new BinominalDistribution();
+	BinominalDistribution* copy = new BinominalDistribution;
 	*copy = *this;
 	copy->init();
 	return copy;
@@ -286,7 +286,7 @@ namespace nestio
     } 
     IDistribution* copy_init()
     {
-	FixDoubleValue* copy = new FixDoubleValue();
+	FixDoubleValue* copy = new FixDoubleValue;
 	*copy = *this;
 	copy->init();
 	return copy;
@@ -322,7 +322,7 @@ namespace nestio
     }
     IDistribution* copy_init()
     {
-	FixIntValue* copy = new FixIntValue();
+	FixIntValue* copy = new FixIntValue;
 	*copy = *this;
 	copy->init();
 	return copy;
