@@ -65,7 +65,7 @@ class NESTProxy
 
 		void sync(double& t)
 		{
-			logger.syncronize(t);
+			logger.synchronize(t);
 		}
 	public:
 		NESTProxy(nestio::SimSettings &simSettings,
@@ -93,10 +93,9 @@ class NESTProxy
 			MPI_Comm_rank (MPI_COMM_WORLD, &rank);
 			num_threads = omp_get_max_threads();
 			
-			//init rand
-			std::cout << "1 rank=" << rank << std::endl; 
-			//sleep(rank);
-			//srand(time(NULL));
+			sleep(rank);
+			srand(time(NULL));
+			
 			#ifdef _DEBUG_MODE
 			std::cout << "print config" << std::endl;
 			std::cout << "\tTstop="<< simSettings.T<< std::endl;
@@ -104,13 +103,10 @@ class NESTProxy
 			std::cout << "configuration:" << std::endl;
 			std::cout << conf << std::endl;
 			#endif
-			
-			
-			
+						
 			spikeDetectors = new std::vector<SpikeDetector*>[num_threads];
 			multimeters = new std::vector<Multimeter*>[num_threads];
-			
-			
+
 			
 			#pragma omp parallel 
 			{
@@ -138,9 +134,6 @@ class NESTProxy
 			    else {
 			      nompt = numberOfMultimetersPerThread->getIntValue();
 			    }
-			    
-			    std::cout << "nompt=" << nompt << std::endl;
-			    std::cout << "nosdpt=" << nosdpt << std::endl;
 			    
 			    #pragma omp critical 
 			    {
@@ -190,7 +183,6 @@ class NESTProxy
 			  //#pragma omp barrier
 			  
 			}
-			std::cout << "2 rank=" << rank << std::endl; 
 			logger.initialize(simSettings.T);
 		}
 
@@ -228,11 +220,11 @@ class NESTProxy
 		 */
 		void run()
 		{
-			//#ifdef _DEBUG_MODE
+			#ifdef _DEBUG_MODE
 			std::cout << "NEST PROXY RUN" << std::endl;
 			std::cout << "Parameters:" << std::endl;
 			std::cout << "RAND_MAX=" << RAND_MAX << std::endl;
-			//#endif
+			#endif
 			//std::cout << "thread_num=" << thread_num << std::endl;
 			double t=0;
 			int timestamp=0;
@@ -300,9 +292,9 @@ class NESTProxy
 				t+=simSettings.Tresolution;
 				timestamp++;
 				}
-			//#ifdef _DEBUG_MODE
+			#ifdef _DEBUG_MODE
 			std::cout << "Iterations done" << std::endl;
-			//#endif
+			#endif
 			
 			delete deadTimeSpikeDetector;
 			delete deadTimeMultimeters;

@@ -70,9 +70,11 @@ std::ostream& nestio::operator << (std::ostream &o, const nestio::Loggers &l)
     case nestio::SIONLIB_BUFFERED:
       o << "SIONLIB_BUFFERED";
       break;
+    #ifdef _SIONLIB_COLL
     case nestio::SIONLIB_COLLECTIVE:
       o << "SIONLIB_COLLECTIVE";
       break;
+    #endif
     case nestio::HDF5:
       o << "HDF5";
       break;

@@ -71,8 +71,9 @@ void nest::AsciiLogger2::signup_spike(int id, int neuron_id)
       spikedetectors.insert(std::pair<int,sd>(id, sd(id, new std::ofstream ())));
       spikedetectors[id].neuron_id_.push_back(neuron_id);
     }
-    
+    #ifdef _DEBUG_MODE
     std::cout << "signup_spike id=" << id << " neuron_id=" << neuron_id << std::endl;
+    #endif
     //*spike_fs_ << spike->spikedetector_id << " " << neuron_id << "\n";
     //*spike_fs_ << "id=" << id << " neuron_id=" << " " << neuron_id << "\n";
   }
@@ -90,8 +91,9 @@ void nest::AsciiLogger2::signup_multi(int id, int neuron_id, double sampling_int
       multimeters.insert(std::pair<int,mm>(id, mm(id, new std::ofstream (), sampling_interval, valueNames)));
       multimeters[id].neuron_id_.push_back(neuron_id);
     }
-    
+    #ifdef _DEBUG_MODE
     std::cout << "signup_multi id=" << id << " neuron_id=" << neuron_id << " sampling_interval=" << sampling_interval << std::endl;
+    #endif
   }
 }
 
@@ -117,7 +119,9 @@ nest::AsciiLogger2::Parameters_::Parameters_(const std::string& path, const std:
 {}
 nest::AsciiLogger2::AsciiLogger2(): n(0), P_(".", std::string("log"), true, true, false)
 {  
+  #ifdef _DEBUG_MODE
   std::cout << "nest::AsciiLogger2::AsciiLogger2()" << std::endl;
+  #endif
 }
 
 nest::AsciiLogger2::AsciiLogger2(std::string path): n(0), P_(path, std::string("log"), true, true, false)
@@ -126,7 +130,9 @@ nest::AsciiLogger2::AsciiLogger2(std::string path): n(0), P_(path, std::string("
 
 void nest::AsciiLogger2::open_file(std::ofstream& fs_,int id, std::string prefix)
 {  
+  #ifdef _DEBUG_MODE
   std::cout << "nest::AsciiLogger2::open_file" << std::endl;
+  #endif
   // we only close files here, opening is left to calibrate()
    if ( P_.close_on_reset_ && fs_.is_open() )
    {
@@ -253,7 +259,9 @@ void nest::AsciiLogger2::open_file(std::ofstream& fs_,int id, std::string prefix
 
 void nest::AsciiLogger2::initialize(const double T) 
 {
+  #ifdef _DEBUG_MODE
   std::cout << "AsciiLogger2::initialize" << omp_get_thread_num() << std::endl;
+  #endif
   int rank=0;
   //MPI_Comm_rank (MPI_COMM_WORLD, &rank);
     
@@ -295,8 +303,9 @@ void nest::AsciiLogger2::close_file(std::ofstream& fs_)
 
 void nest::AsciiLogger2::finalize()
 {
+  #ifdef _DEBUG_MODE
   std::cout << "AsciiLogger2::finalizeDatasets" << omp_get_thread_num() << std::endl;
-  
+  #endif
   for (std::map<int,sd>::iterator it = spikedetectors.begin(); it!=spikedetectors.end(); ++it)
     close_file(*(it->second.fs_));
   
@@ -336,7 +345,9 @@ const std::string nest::AsciiLogger2::build_filename_(int id,std::string prefix)
   const int gidigits = static_cast<int>(std::floor(std::log10(static_cast<float>(Node::network()->size()))) + 1);
   std::ostringstream basename;
   const std::string& path = Node::network()->get_data_path();
-  if ( !path.empty() )
+  if (!P_.path_.empty() )
+    basename << P_.path_ << '/';
+  else if ( !path.empty() )
     basename << path << '/';
   basename << Node::network()->get_data_prefix();
 

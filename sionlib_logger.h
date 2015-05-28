@@ -78,7 +78,9 @@ public:
       ptr+=n;
     }
     else {
+      #ifdef _DEBUG_MODE
       std::cout << "SionBuffer: buffer overflow: ptr=" << ptr << " n=" << n << " max_size=" << max_size << std::endl;
+      #endif
       std::cerr << "SionBuffer: buffer overflow: ptr=" << ptr << " n=" << n << " max_size=" << max_size << std::endl;
     }
   }
@@ -173,6 +175,14 @@ class Sionlib_logger : public ILogger
 		
 		void crecord_spike(int spikedetector_id, int neuron_id, int timestamp);
 		void crecord_multi(int multimeter_id, int neuron_id, int timestamp, const std::vector<double_t>& data);
+		
+		void writeHeaders2File(const int& thread_num);
+		/**
+		* Build filename from parts.
+		* @note This function returns the filename, it does not manipulate
+		*       any data member.
+		*/
+		const std::string build_filename_(std::string prefix) const;
 		
 		
 	public:

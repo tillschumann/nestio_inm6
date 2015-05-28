@@ -93,8 +93,9 @@ class Index:
 	Td = result_deliver.T
 	
 	gid = "dataset_%i"%self.ind
-        artist_lst = ax.plot(np.mean(Tw, axis=1), picker=True, gid=gid) #-Tsl+Tsy
+        artist_lst = ax.plot(np.mean(Tw-Tsl+Tsy, axis=1), picker=True, gid=gid) #
         
+        print "sum timings: ", np.sum(np.sum(Tw+Tsl+Tsy+Td, axis=1))
         
         reader_configuration = csv.reader(open('%s/config.csv'%dir_path,"rb"),delimiter=';')
         for row in reader_configuration:

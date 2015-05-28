@@ -61,6 +61,7 @@ namespace nest
 		  //std::ofstream spike_fs_;
 		  //std::ofstream multi_fs_;
 		  
+		  //counts open file times
 		  int n;
 		  
 		  struct State_ {

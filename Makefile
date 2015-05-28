@@ -21,6 +21,9 @@ SERSIONCFLAGS = `$(SIONCONFIG) --cflags --ser --be --64`
 
 all: hdf5mpipp
 
+debug: CFLAGS += -D_DEBUG_MODE=1
+debug: hdf5mpipp
+
 
 hdf5mpipp: sionlib_logger.o NESTProxy.o nestio_func.o abstract_logger.o hdf5mpipp.o ohdf5mpipp.o AsciiLogger2.o Multimeter.o SpikeDetector.o runNESTProxy.o seriestimer.o stopwatch.o scopetimer.o
 	$(CC) $(CFLAGS) -o runNESTProxy runNESTProxy.o abstract_logger.o nestio_func.o hdf5mpipp.o ohdf5mpipp.o NESTProxy.o sionlib_logger.o AsciiLogger2.o Multimeter.o SpikeDetector.o seriestimer.o stopwatch.o scopetimer.o $(INCLUDE) $(LIBSHDF) $(MPISIONLIB) $(LIB)

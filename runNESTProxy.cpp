@@ -68,11 +68,13 @@ void run(nestio::Configuration &conf, nestio::SimSettings &simSettings,int argc,
 	//mfn << output_dir_file.str() << "/data.multi_sion";
 	logger = new Sionlib_logger(output_dir_file.str(), "sion", conf.bufferSize, conf.bufferSize, nestio::Buffered);
 	break;
+      #ifdef _SIONLIB_COLL
       case nestio::SIONLIB_COLLECTIVE:
 	//sfn << output_dir_file.str() << "/data.spike_sion";
 	//mfn << output_dir_file.str() << "/data.multi_sion";
 	logger = new Sionlib_logger(output_dir_file.str(), "sion", conf.bufferSize, conf.bufferSize, nestio::Collective);
 	break;
+      #endif
       case nestio::HDF5:
 	fns << output_dir_file.str() << "/data.hdf5";
 	logger = new HDF5mpipp(fns.str(), conf.bufferSize, simSettings);
@@ -190,7 +192,7 @@ int main(int argc, char *argv[])
 	
 	nestio::Configuration conf;
 	// conf.logger = nestio::SIONLIB;
-	conf.logger = nestio::ASCII;
+	conf.logger = nestio::SIONLIB;
 	conf.bufferSize = 2400; //2400 1024*1024
 	conf.numberOfThreads=new nestio::FixIntValue(numberOfThreads); //must not be changed
 	conf.numberOfSpikeDetectorsPerThread=new nestio::FixIntValue(1);
