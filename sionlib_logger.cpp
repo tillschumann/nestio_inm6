@@ -14,6 +14,10 @@
 
 #ifdef HAVE_MPI
 #include <mpi.h>
+
+#ifdef JUQUEEN_MULTIFILE
+#include <mpix.h>
+#endif
 #endif /* #ifdef HAVE_MPI */
 
 
@@ -24,7 +28,6 @@ template <class T> const T& min (const T& a, const T& b) {
 void Sionlib_logger::crecord_spike(int spikedetector_id, int neuron_id, int timestamp)
 {
   const int thread_num = omp_get_thread_num();
- 
   buffer_spike[thread_num].getEnoughFreeSpace(3*sizeof(int));
   buffer_spike[thread_num] << spikedetector_id << neuron_id << timestamp;
 }
@@ -296,6 +299,17 @@ void Sionlib_logger::initialize(const double T)
 {  
   //set missing parameter
   P_.T_ = T;
+
+  #ifdef HAVE_MPI
+  int rank, num_procs;
+  MPI_Comm lComm;
+  
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
+  #ifdef JUQUEEN_MULTIFILE
+  MPIX_Pset_same_comm_create(&lComm);
+  #endif
+  #endif
   
   
   #pragma omp parallel
@@ -332,22 +346,25 @@ void Sionlib_logger::initialize(const double T)
     
     /* MPI */
     #ifdef HAVE_MPI
-    int rank, num_procs;
     
     sion_int64 sion_buffer_size_spike = P_.sion_buffer_size_;
     sion_int64 sion_buffer_size_multi = P_.sion_buffer_size_;
-    
-    MPI_Comm lComm;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
-    
+
+#ifdef JUQUEEN_MULTIFILE
+    numFiles = -1;
+#endif
+
     /* create a new file */
     spike_sid[thread_num] = sion_paropen_ompi(spike_fname, "bw", &numFiles,
     MPI_COMM_WORLD, &lComm,
     &sion_buffer_size_spike, &fsblksize,
     &rank,
     NULL, &newfname);
-    
+
+#ifdef JUQUEEN_MULTIFILE
+    numFiles = -1;
+#endif
+
     #ifdef _DEBUG_MODE
     std::cout << "Sionlib_logger::initialize created spike_sid" << std::endl;
     #endif
@@ -511,15 +528,10 @@ void Sionlib_logger::synchronize(const double& t)
   #ifdef _SIONLIB_COLL
   if (P_.loggerType_ == nestio::Collective) {
     const int thread_num = omp_get_thread_num();
-
-    if (buffer_spike[thread_num].getSize()>0) {
-      sion_coll_fwrite(buffer_spike[thread_num].read(), 1, buffer_spike[thread_num].getSize(), spike_sid[thread_num]);
-      buffer_spike[thread_num].clear();
-    }
-    if (buffer_multi[thread_num].getSize()>0) {
-      sion_coll_fwrite(buffer_multi[thread_num].read(), 1, buffer_multi[thread_num].getSize(), multi_sid[thread_num]);
-      buffer_multi[thread_num].clear();
-    }
+    sion_coll_fwrite(buffer_spike[thread_num].read(), 1, buffer_spike[thread_num].getSize(), spike_sid[thread_num]);
+    buffer_spike[thread_num].clear();
+    sion_coll_fwrite(buffer_multi[thread_num].read(), 1, buffer_multi[thread_num].getSize(), multi_sid[thread_num]);
+    buffer_multi[thread_num].clear();
   }
   #endif
 }
