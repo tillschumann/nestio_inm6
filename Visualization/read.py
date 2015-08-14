@@ -93,7 +93,8 @@ class Index:
 	Td = result_deliver.T
 	
 	gid = "dataset_%i"%self.ind
-        artist_lst = ax.plot(np.mean(Tw-Tsl+Tsy, axis=1), picker=True, gid=gid) #
+        artist_lst = ax.plot(np.mean(Tw-Tsl+Tsy, axis=1), picker=True, gid=gid) # have two versions of read.py only diff is /1000
+	#artist_lst = ax.plot(np.mean(Tw-Tsl+Tsy, axis=1)/1000, picker=True, gid=gid) # validate order by comparing sum below to real execution time
         
         print "sum timings: ", np.sum(np.sum(Tw+Tsl+Tsy+Td, axis=1))
         
